@@ -1,5 +1,5 @@
 import '../global.css';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { InteractionManager } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -25,33 +25,54 @@ export default function RootLayout() {
   const theme = useAppStore((state) => state.theme);
   const colors = theme === 'dark' ? darkColors : lightColors;
 
+  const [isReady, setIsReady] = useState(false);
+
   // Fire auth initialization ASAP, but don't block the render tree
   useEffect(() => {
+    let isMounted = true;
     const task = InteractionManager.runAfterInteractions(async () => {
       await initialize();
+      if (isMounted) {
+        setIsReady(true);
+      }
     });
-    return () => task.cancel();
+    return () => {
+      isMounted = false;
+      task.cancel();
+    };
   }, [initialize]);
 
   // Auth-based navigation guard
   useEffect(() => {
-    if (hasPin === null) return; // Still initializing
+    if (!isReady || hasPin === null) return;
 
-    // Hide splash the instant we know the auth state
-    void SplashScreen.hideAsync();
+    // Sequence is CRITICAL to prevent Android crash: 
+    // hide splash -> wait a tick -> navigation
+    const navigateSafely = async () => {
+      try {
+        await SplashScreen.hideAsync();
+      } catch (e) {
+        // Splash might already be hidden
+      }
 
-    const inProtected = segments[0] === '(tabs)' || segments[0] === 'settings' || segments[0] === 'category';
+      // Small delay prevents navigation while React Native tree is locking during layout
+      setTimeout(() => {
+        const inProtected = segments[0] === '(tabs)' || segments[0] === 'settings' || segments[0] === 'category';
 
-    if (!isAuthenticated && hasPin && inProtected) {
-      router.replace('/login');
-    } else if (isAuthenticated && segments[0] === 'login') {
-      router.replace('/(tabs)');
-    } else if (!hasPin && !hasRedirected.current) {
-      // No PIN set — skip login entirely, go straight to app
-      hasRedirected.current = true;
-      router.replace('/(tabs)');
-    }
-  }, [isAuthenticated, hasPin, segments, router]);
+        if (!isAuthenticated && hasPin && inProtected) {
+          router.replace('/login');
+        } else if (isAuthenticated && segments[0] === 'login') {
+          router.replace('/(tabs)');
+        } else if (!hasPin && !hasRedirected.current) {
+          hasRedirected.current = true;
+          router.replace('/(tabs)');
+        }
+      }, 50);
+    };
+
+    void navigateSafely();
+
+  }, [isReady, isAuthenticated, hasPin, segments, router]);
 
   return (
     <>

@@ -9,6 +9,7 @@ import {
   Text,
   TextInput,
   View,
+  InteractionManager
 } from 'react-native';
 
 import { AppScreen } from '@/src/components/AppScreen';
@@ -81,13 +82,26 @@ export default function HomeScreen() {
   }, [categories]);
 
   useEffect(() => {
-    void (async () => {
-      if (!initialized) {
-        await initialize();
+    let isMounted = true;
+    const task = InteractionManager.runAfterInteractions(async () => {
+      try {
+        if (!initialized) {
+          await initialize();
+        }
+        await hydrateVault();
+      } catch (err) {
+        console.warn('Home screen DB init failed safely:', err);
+      } finally {
+        if (isMounted) {
+          setHasLoadedApp(true);
+        }
       }
-      await hydrateVault();
-      setHasLoadedApp(true);
-    })();
+    });
+
+    return () => {
+      isMounted = false;
+      task.cancel();
+    };
   }, [hydrateVault, initialize, initialized, setHasLoadedApp]);
 
   useEffect(() => {
@@ -161,11 +175,11 @@ export default function HomeScreen() {
             onChangeText={setSearchQuery}
             placeholder="Search files and categories..."
             placeholderTextColor={colors.textTertiary}
-            style={{ 
-              borderColor: colors.rim, 
-              borderWidth: 1, 
-              borderRadius: 24, 
-              color: colors.textPrimary, 
+            style={{
+              borderColor: colors.rim,
+              borderWidth: 1,
+              borderRadius: 24,
+              color: colors.textPrimary,
               backgroundColor: colors.glass04,
               paddingHorizontal: 16,
               paddingVertical: 12,
@@ -227,7 +241,7 @@ export default function HomeScreen() {
               </View>
               <MaterialIcons name="chevron-right" size={20} color={colors.textTertiary} />
             </Pressable>
-            
+
             <Pressable
               onPress={handleStoragePress}
               className="flex-row items-center justify-between px-4 py-3 rounded-b-chip border"

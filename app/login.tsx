@@ -98,47 +98,51 @@ export default function LoginScreen() {
         }
     };
 
-    if (hasPin === null || isAuthenticated) {
+    if (hasPin === null) {
         return <View style={{ flex: 1, backgroundColor: colors.void }} />;
+    }
+
+    if (isAuthenticated) {
+        return null; // Let the layout router handle the redirect, don't render two screens
     }
 
     const isConfirming = !hasPin && setupPin.length === 6;
     const title = !hasPin ? (isConfirming ? 'Confirm your PIN' : 'Create Master PIN') : 'Enter Security PIN';
-    const subtitle = !hasPin 
-        ? 'Protect your files with a secure 6-digit access code.' 
+    const subtitle = !hasPin
+        ? 'Protect your files with a secure 6-digit access code.'
         : 'Welcome back. Authenticate to unlock Vinyas.';
 
     return (
         <AppScreen padded={false}>
             <View className="flex-1" style={{ backgroundColor: colors.void }}>
                 {/* Background Accent */}
-                <View 
-                    style={{ 
-                        position: 'absolute', 
-                        top: -100, 
-                        right: -100, 
-                        width: 300, 
-                        height: 300, 
-                        borderRadius: 150, 
+                <View
+                    style={{
+                        position: 'absolute',
+                        top: -100,
+                        right: -100,
+                        width: 300,
+                        height: 300,
+                        borderRadius: 150,
                         backgroundColor: theme === 'dark' ? 'rgba(0, 229, 204, 0.05)' : 'rgba(0, 229, 204, 0.1)',
                         filter: 'blur(80px)' as any
-                    }} 
+                    }}
                 />
 
                 <View className="flex-1 justify-center items-center px-lg">
                     {/* Header Header */}
                     <View className="items-center mb-xl">
-                        <View 
+                        <View
                             className="w-16 h-16 rounded-3xl items-center justify-center mb-4 border"
-                            style={{ 
+                            style={{
                                 backgroundColor: colors.glass07,
                                 borderColor: error ? colors.danger : colors.rim
                             }}
                         >
-                            <MaterialIcons 
-                                name={hasPin ? "lock" : "shield"} 
-                                size={32} 
-                                color={error ? colors.danger : colors.tealGlow} 
+                            <MaterialIcons
+                                name={hasPin ? "lock" : "shield"}
+                                size={32}
+                                color={error ? colors.danger : colors.tealGlow}
                             />
                         </View>
                         <Text className="text-3xl font-extrabold text-center tracking-tight" style={{ color: colors.textPrimary }}>
@@ -155,9 +159,9 @@ export default function LoginScreen() {
                             <View
                                 key={i}
                                 className={`w-[12px] h-[12px] rounded-full border ${pin.length > i ? '' : 'border-transparent'}`}
-                                style={{ 
-                                    backgroundColor: pin.length > i 
-                                        ? (error ? colors.danger : colors.tealGlow) 
+                                style={{
+                                    backgroundColor: pin.length > i
+                                        ? (error ? colors.danger : colors.tealGlow)
                                         : colors.glass15,
                                     borderColor: pin.length > i ? 'rgba(255,255,255,0.2)' : 'transparent'
                                 }}
@@ -172,7 +176,7 @@ export default function LoginScreen() {
                                 key={num}
                                 onPress={() => handleKeyPress(num)}
                                 className="w-[28%] aspect-square rounded-full items-center justify-center border"
-                                style={{ 
+                                style={{
                                     backgroundColor: colors.glass04,
                                     borderColor: colors.rim
                                 }}
@@ -184,7 +188,7 @@ export default function LoginScreen() {
                         <Pressable
                             onPress={() => handleKeyPress('0')}
                             className="w-[28%] aspect-square rounded-full items-center justify-center border"
-                            style={{ 
+                            style={{
                                 backgroundColor: colors.glass04,
                                 borderColor: colors.rim
                             }}
