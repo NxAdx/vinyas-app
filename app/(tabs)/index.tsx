@@ -17,7 +17,7 @@ import { GlassCard } from '@/src/components/GlassCard';
 import { useAppStore } from '@/src/stores/useAppStore';
 import { useFileStore } from '@/src/stores/useFileStore';
 import { useVaultStore } from '@/src/stores/useVaultStore';
-import { colors } from '@/src/theme/tokens';
+import { darkColors, lightColors } from '@/src/theme/tokens';
 
 const CATEGORY_ICONS: Record<string, string> = {
   'cat-img': 'image',

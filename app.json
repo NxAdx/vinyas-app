@@ -8,6 +8,12 @@
     "scheme": "vinyas",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "enabled": false
+    },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.vinyas.privateexplorer"
@@ -44,10 +50,6 @@
       ],
       "expo-secure-store"
     ],
-    "updates": {
-      "url": "https://u.expo.dev/YOUR-PROJECT-ID",
-      "fallbackToCacheTimeout": 0
-    },
     "experiments": {
       "typedRoutes": false,
       "reactCompiler": true

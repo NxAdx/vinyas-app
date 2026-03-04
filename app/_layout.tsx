@@ -8,7 +8,6 @@ import * as SplashScreen from 'expo-splash-screen';
 import { darkColors, lightColors } from '@/src/theme/tokens';
 import { useAuthStore } from '@/src/stores/useAuthStore';
 import { useAppStore } from '@/src/stores/useAppStore';
-import { OtaUpdater } from '@/src/components/OtaUpdater';
 
 // Keep the native splash visible until we've resolved auth state
 SplashScreen.preventAutoHideAsync();
@@ -76,7 +75,6 @@ export default function RootLayout() {
 
   return (
     <>
-      <OtaUpdater />
       <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
       <Stack
         screenOptions={{

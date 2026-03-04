@@ -3,26 +3,40 @@ import ReactNativeBiometrics, { BiometryTypes } from 'react-native-biometrics';
 import { getDatabase } from '../database/db';
 import type { KoshEntry } from '../types';
 
-const rnBiometrics = new ReactNativeBiometrics({ allowDeviceCredentials: true });
+let _rnBiometrics: ReactNativeBiometrics | null = null;
+
+function getBiometrics() {
+  if (!_rnBiometrics) {
+    _rnBiometrics = new ReactNativeBiometrics({ allowDeviceCredentials: true });
+  }
+  return _rnBiometrics;
+}
 
 export const VaultService = {
-  
+
   async isBiometricHardwareAvailable() {
-    const { available, biometryType } = await rnBiometrics.isSensorAvailable();
-    return {
-      isAvailable: available,
-      type: biometryType
-    };
+    try {
+      const bio = getBiometrics();
+      const { available, biometryType } = await bio.isSensorAvailable();
+      return {
+        isAvailable: available,
+        type: biometryType
+      };
+    } catch (e) {
+      console.warn("Biometrics missing or incompatible:", e);
+      return { isAvailable: false, type: undefined };
+    }
   },
 
   async authenticateBiometric(): Promise<boolean> {
     const hardware = await this.isBiometricHardwareAvailable();
-    
+
     if (!hardware.isAvailable) {
       throw new Error('Biometric hardware is not available on this device');
     }
 
-    const { success } = await rnBiometrics.simplePrompt({
+    const bio = getBiometrics();
+    const { success } = await bio.simplePrompt({
       promptMessage: 'Unlock Kosh Vault',
       cancelButtonText: 'Cancel',
     });
@@ -41,7 +55,7 @@ export const VaultService = {
     const credentials = await Keychain.getGenericPassword({
       service: 'vinyas_vault_credentials'
     });
-    
+
     if (credentials) {
       return credentials.password === passcode;
     }

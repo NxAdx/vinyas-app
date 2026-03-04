@@ -1,26 +1,24 @@
-import * as FileSystem from 'expo-file-system';
-import type { ExplorerFileItem } from '../types';
-
-const {
+import {
   documentDirectory,
   StorageAccessFramework,
   getInfoAsync,
   readAsStringAsync,
   writeAsStringAsync,
   deleteAsync
-} = FileSystem as any;
+} from 'expo-file-system';
+import type { ExplorerFileItem } from '../types';
 
-const SAF_URI_FILE = documentDirectory + 'saf_uri.txt';
+const SAF_URI_FILE = (documentDirectory || '') + 'saf_uri.txt';
 
 export const FileService = {
-  
+
   async getSavedUri(): Promise<string | null> {
     try {
       const info = await getInfoAsync(SAF_URI_FILE);
       if (info.exists) {
         return await readAsStringAsync(SAF_URI_FILE);
       }
-    } catch {}
+    } catch { }
     return null;
   },
 
@@ -32,7 +30,7 @@ export const FileService = {
       }
 
       const permissions = await StorageAccessFramework.requestDirectoryPermissionsAsync();
-      
+
       if (permissions.granted) {
         await writeAsStringAsync(SAF_URI_FILE, permissions.directoryUri);
         return true;
@@ -61,9 +59,9 @@ export const FileService = {
       if (!directoryUri) throw new Error('Failed to obtain storage URI.');
 
       const filesRefs = await StorageAccessFramework.readDirectoryAsync(directoryUri);
-      
+
       const itemsToFetch = filesRefs.slice(0, 150);
-      
+
       const resolvedInfos = await Promise.all(
         itemsToFetch.map((uri: string) => getInfoAsync(uri))
       );
@@ -76,7 +74,7 @@ export const FileService = {
 
         const namePart = decodeURIComponent(uri.split('/').pop() || '');
         const actualName = namePart.split(':').pop() || namePart;
-        
+
         let mimeType = 'application/octet-stream';
         const lowerName = actualName.toLowerCase();
         if (lowerName.endsWith('.pdf')) mimeType = 'application/pdf';
@@ -87,13 +85,13 @@ export const FileService = {
         else if (lowerName.endsWith('.zip')) mimeType = 'application/zip';
 
         results.push({
-           id: uri,
-           name: actualName,
-           uri: uri,
-           size: info.size || 0,
-           mimeType,
-           modifiedAt: info.modificationTime ? new Date(info.modificationTime * 1000).toISOString() : new Date().toISOString(),
-           storageSource: actualName.includes('emulated') ? 'internal' : 'sd_card'
+          id: uri,
+          name: actualName,
+          uri: uri,
+          size: info.size || 0,
+          mimeType,
+          modifiedAt: info.modificationTime ? new Date(info.modificationTime * 1000).toISOString() : new Date().toISOString(),
+          storageSource: actualName.includes('emulated') ? 'internal' : 'sd_card'
         });
       });
 
@@ -105,7 +103,7 @@ export const FileService = {
       return results;
     } catch (e) {
       console.error('Error scanning SAF:', e);
-      try { await deleteAsync(SAF_URI_FILE, { idempotent: true }); } catch {}
+      try { await deleteAsync(SAF_URI_FILE, { idempotent: true }); } catch { }
       throw new Error('Failed to load storage files. Please try granting folder access again.');
     }
   }
