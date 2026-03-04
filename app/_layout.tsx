@@ -1,38 +1,53 @@
 import '../global.css';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import { InteractionManager } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import * as SplashScreen from 'expo-splash-screen';
 
 import { colors } from '@/src/theme/tokens';
 import { useAuthStore } from '@/src/stores/useAuthStore';
 import { OtaUpdater } from '@/src/components/OtaUpdater';
 
+// Keep the native splash visible until we've resolved auth state
+SplashScreen.preventAutoHideAsync();
+
 export default function RootLayout() {
   const router = useRouter();
   const segments = useSegments();
+  const hasRedirected = useRef(false);
 
   const initialize = useAuthStore((state) => state.initialize);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const hasPin = useAuthStore((state) => state.hasPin);
 
+  // Fire auth initialization ASAP, but don't block the render tree
   useEffect(() => {
-    void initialize();
+    const task = InteractionManager.runAfterInteractions(async () => {
+      await initialize();
+    });
+    return () => task.cancel();
   }, [initialize]);
 
+  // Auth-based navigation guard
   useEffect(() => {
-    if (hasPin === null) return; // Still loading
+    if (hasPin === null) return; // Still initializing
 
-    // We are on the root level, redirect to login if not authenticated
-    const inTabsGroup = segments[0] === '(tabs)' || segments[0] === 'settings' || segments[0] === 'category';
+    // Hide splash the instant we know the auth state
+    void SplashScreen.hideAsync();
 
-    if (!isAuthenticated && inTabsGroup) {
+    const inProtected = segments[0] === '(tabs)' || segments[0] === 'settings' || segments[0] === 'category';
+
+    if (!isAuthenticated && hasPin && inProtected) {
       router.replace('/login');
     } else if (isAuthenticated && segments[0] === 'login') {
       router.replace('/(tabs)');
+    } else if (!hasPin && !hasRedirected.current) {
+      // No PIN set — skip login entirely, go straight to app
+      hasRedirected.current = true;
+      router.replace('/(tabs)');
     }
   }, [isAuthenticated, hasPin, segments, router]);
-
-  if (hasPin === null) return null; // Show splash natively
 
   return (
     <>
@@ -44,7 +59,7 @@ export default function RootLayout() {
           contentStyle: {
             backgroundColor: colors.void,
           },
-          animation: 'fade', // Smoother transition for login
+          animation: 'fade',
         }}
       >
         <Stack.Screen name="login" options={{ gestureEnabled: false }} />
