@@ -1,33 +1,22 @@
 import { PropsWithChildren } from 'react';
-import { StyleSheet, View, type ViewStyle } from 'react-native';
+import { View, type ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-import { colors, spacing } from '@/src/theme/tokens';
 
 interface AppScreenProps extends PropsWithChildren {
   padded?: boolean;
   style?: ViewStyle;
+  className?: string;
 }
 
-export function AppScreen({ children, padded = true, style }: AppScreenProps) {
+export function AppScreen({ children, padded = true, style, className = '' }: AppScreenProps) {
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <View style={[styles.container, padded ? styles.padded : undefined, style]}>{children}</View>
+    <SafeAreaView className="flex-1 bg-void" edges={['top']}>
+      <View 
+        className={`flex-1 bg-void ${padded ? 'px-lg pt-sm' : ''} ${className}`}
+        style={style}
+      >
+        {children}
+      </View>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.void,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: colors.void,
-  },
-  padded: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
-  },
-});

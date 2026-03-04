@@ -13,11 +13,13 @@ interface FileState {
   
   initialize: () => Promise<void>;
   refreshData: () => Promise<void>;
-  refreshExplorer: (query: string) => Promise<void>;
+  refreshExplorer: (query?: string) => Promise<void>;
   createNewCategory: (name: string) => Promise<void>;
   setSelectedCategoryId: (id: string | null) => void;
   bookmarkFile: (item: ExplorerFileItem, categoryId: string) => Promise<void>;
   removeGhostLinkByUri: (uri: string, categoryId: string) => Promise<void>;
+  removeGhostLink: (id: string) => Promise<void>;
+  resetAllData: () => Promise<void>;
 }
 
 export const useFileStore = create<FileState>((set, get) => ({
@@ -176,7 +178,7 @@ export const useFileStore = create<FileState>((set, get) => ({
     set({ loading: false });
   },
 
-  refreshExplorer: async (query: string) => {
+  refreshExplorer: async (query?: string) => {
     set({ loading: true, error: null });
     try {
       const { FileService } = await import('../services/file.service');
@@ -234,5 +236,25 @@ export const useFileStore = create<FileState>((set, get) => ({
       ghostLinks: state.ghostLinks.filter(l => !(l.fileUri === uri && l.categoryId === categoryId)),
       loading: false
     }));
+  },
+
+  removeGhostLink: async (id: string) => {
+    set({ loading: true });
+    await new Promise(res => setTimeout(res, 300));
+    set(state => ({
+      ghostLinks: state.ghostLinks.filter(l => l.id !== id),
+      loading: false
+    }));
+  },
+
+  resetAllData: async () => {
+    set({ loading: true });
+    await new Promise(res => setTimeout(res, 500));
+    set({
+      ghostLinks: [],
+      explorerFiles: [],
+      selectedCategoryId: null,
+      loading: false,
+    });
   }
 }));

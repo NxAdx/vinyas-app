@@ -4,11 +4,13 @@ import {
   Alert,
   FlatList,
   Pressable,
+  SectionList,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 
 import { AppScreen } from '@/src/components/AppScreen';
 import { GlassCard } from '@/src/components/GlassCard';
@@ -40,6 +42,8 @@ export default function ExplorerScreen() {
 
   const { q } = useLocalSearchParams<{ q?: string }>();
   const [query, setQuery] = useState(q ?? '');
+  const [selectedUris, setSelectedUris] = useState<Set<string>>(new Set());
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (typeof q === 'string') {
@@ -62,77 +66,134 @@ export default function ExplorerScreen() {
     return selected?.name ?? 'None';
   }, [categories, selectedCategoryId]);
 
+  const sections = useMemo(() => {
+    if (query.trim()) {
+      return [{ title: 'Search Results', data: explorerFiles }];
+    }
+
+    const map: Record<string, ExplorerFileItem[]> = {};
+    explorerFiles.forEach((file) => {
+      let folderName = 'Root';
+      try {
+        const parts = decodeURIComponent(file.uri).split('/');
+        if (parts.length > 2) folderName = parts[parts.length - 2];
+      } catch {}
+      
+      if (!map[folderName]) map[folderName] = [];
+      map[folderName].push(file);
+    });
+
+    return Object.keys(map).sort().map((folder) => ({
+      title: folder,
+      originalData: map[folder],
+      data: expandedFolders.has(folder) ? map[folder] : [],
+    }));
+  }, [explorerFiles, query, expandedFolders]);
+
+  const toggleFolder = (folder: string) => {
+    setExpandedFolders((prev) => {
+      const next = new Set(prev);
+      if (next.has(folder)) next.delete(folder);
+      else next.add(folder);
+      return next;
+    });
+  };
+
   const renderItem = ({ item }: { item: ExplorerFileItem }) => {
     const linksForFile = ghostLinks.filter((link) => link.fileUri === item.uri);
     const isBookmarkedInSelectedCategory = linksForFile.some((link) => link.categoryId === selectedCategoryId);
     const hasBookmarks = linksForFile.length > 0;
+    const isSelectedMode = selectedUris.has(item.uri);
+
+    const toggleSelection = () => {
+      setSelectedUris((prev) => {
+        const next = new Set(prev);
+        if (next.has(item.uri)) {
+          next.delete(item.uri);
+        } else {
+          next.add(item.uri);
+        }
+        return next;
+      });
+    };
 
     return (
-      <GlassCard style={styles.fileCard}>
-        <View style={styles.fileTopRow}>
-          <Text style={styles.fileName} numberOfLines={1}>
-            {item.name}
-          </Text>
-          <Text style={styles.fileSize}>{formatBytes(item.size)}</Text>
-        </View>
-        <Text style={styles.fileMeta}>
-          {item.mimeType} • {item.storageSource}
-        </Text>
-        <Text style={styles.fileMeta}>
-          {hasBookmarks ? `${linksForFile.length} bookmark(s)` : 'Not bookmarked'}
-        </Text>
-        <View style={styles.fileActions}>
-          <Pressable
-            style={[styles.actionButton, styles.primaryAction]}
-            onPress={async () => {
-              if (!selectedCategoryId) {
-                Alert.alert('Select a category', 'Choose a category before bookmarking.');
-                return;
-              }
-
-              try {
-                if (isBookmarkedInSelectedCategory) {
-                  await removeGhostLinkByUri(item.uri, selectedCategoryId);
-                } else {
-                  await bookmarkFile(item, selectedCategoryId);
-                }
-              } catch (actionError) {
-                const message =
-                  actionError instanceof Error ? actionError.message : 'Could not update bookmark.';
-                Alert.alert('Bookmark action failed', message);
-              }
-            }}
-          >
-            <Text style={styles.primaryActionText}>
-              {isBookmarkedInSelectedCategory ? 'Remove' : 'Ghost Bookmark'}
+      <Pressable
+        onLongPress={toggleSelection}
+        onPress={() => {
+          if (selectedUris.size > 0) {
+            toggleSelection();
+          }
+        }}
+        delayLongPress={200}
+      >
+        <GlassCard className={`mb-sm ${isSelectedMode ? 'border-warm500 bg-warm500/10' : ''}`}>
+          <View className="flex-row justify-between gap-md">
+            <Text className="text-textPrimary text-sm font-bold flex-1" numberOfLines={1}>
+              {item.name}
             </Text>
-          </Pressable>
-        </View>
-      </GlassCard>
+            <Text className="text-textSecondary text-xs">{formatBytes(item.size)}</Text>
+          </View>
+          <Text className="text-textTertiary text-xs mt-[5px]">
+            {item.mimeType} • {item.storageSource}
+          </Text>
+          <Text className="text-textTertiary text-xs mt-[5px]">
+            {hasBookmarks ? `${linksForFile.length} bookmark(s)` : 'Not bookmarked'}
+          </Text>
+          <View className="mt-sm flex-row">
+            <Pressable
+              className={`px-3 py-2 rounded-pill ${isSelectedMode ? 'bg-glass10 border-rim' : 'bg-warm500'}`}
+              onPress={async () => {
+                if (selectedUris.size > 0) return; // Disable single action in batch mode
+                if (!selectedCategoryId) {
+                  Alert.alert('Select a category', 'Choose a category before bookmarking.');
+                  return;
+                }
+
+                try {
+                  if (isBookmarkedInSelectedCategory) {
+                    await removeGhostLinkByUri(item.uri, selectedCategoryId);
+                  } else {
+                    await bookmarkFile(item, selectedCategoryId);
+                  }
+                } catch (actionError) {
+                  const message =
+                    actionError instanceof Error ? actionError.message : 'Could not update bookmark.';
+                  Alert.alert('Bookmark action failed', message);
+                }
+              }}
+            >
+              <Text className={`text-xs font-bold ${isSelectedMode ? 'text-textSecondary' : 'text-textPrimary'}`}>
+                {isBookmarkedInSelectedCategory ? 'Remove' : 'Ghost Bookmark'}
+              </Text>
+            </Pressable>
+          </View>
+        </GlassCard>
+      </Pressable>
     );
   };
 
   return (
     <AppScreen>
-      <View style={styles.header}>
-        <Text style={styles.title}>Explorer</Text>
-        <Text style={styles.subtitle}>Browsing source files and pinning ghost bookmarks.</Text>
+      <View className="mb-md gap-[4px]">
+        <Text className="text-textPrimary text-[26px] font-extrabold">Explorer</Text>
+        <Text className="text-textSecondary text-[13px] leading-[19px]">Browsing source files and pinning ghost bookmarks.</Text>
       </View>
 
       <GlassCard>
-        <Text style={styles.sectionTitle}>Search files</Text>
+        <Text className="text-textPrimary text-[15px] font-bold mb-sm">Search files</Text>
         <TextInput
           value={query}
           onChangeText={setQuery}
           placeholder="Search by file name or type"
           placeholderTextColor={colors.textTertiary}
-          style={styles.input}
+          className="border border-rim rounded-chip text-textPrimary bg-glass04 px-3 py-2.5 text-sm"
         />
       </GlassCard>
 
-      <View style={styles.categoryRow}>
-        <Text style={styles.categoryLabel}>Category:</Text>
-        <Text style={styles.categoryValue}>{selectedCategoryName}</Text>
+      <View className="mt-md flex-row items-center gap-2">
+        <Text className="text-textTertiary text-xs uppercase">Category:</Text>
+        <Text className="text-warm300 text-xs font-bold">{selectedCategoryName}</Text>
       </View>
 
       <FlatList
@@ -140,15 +201,21 @@ export default function ExplorerScreen() {
         keyExtractor={(item) => item.id}
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.chipRow}
+        contentContainerClassName="gap-sm py-sm"
         renderItem={({ item }) => {
           const selected = item.id === selectedCategoryId;
           return (
             <Pressable
               onPress={() => setSelectedCategoryId(item.id)}
-              style={[styles.chip, selected ? styles.chipSelected : undefined]}
+              className={`border rounded-pill px-[14px] py-2 ${
+                selected 
+                  ? 'bg-[#D97B3C]/16 border-[#D97B3C]/40' 
+                  : 'border-rim bg-glass04'
+              }`}
             >
-              <Text style={[styles.chipText, selected ? styles.chipTextSelected : undefined]}>
+              <Text className={`text-xs font-semibold ${
+                selected ? 'text-warm300' : 'text-textSecondary'
+              }`}>
                 {item.name}
               </Text>
             </Pressable>
@@ -156,154 +223,92 @@ export default function ExplorerScreen() {
         }}
       />
 
-      <FlatList
-        data={explorerFiles}
+      <SectionList
+        sections={sections as any}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.fileList}
-        renderItem={renderItem}
+        contentContainerClassName="gap-[2px] pb-xxl"
+        renderSectionHeader={({ section }) => (
+          <Pressable
+            onPress={() => {
+              if (query.trim()) return;
+              toggleFolder(section.title);
+            }}
+            className="flex-row items-center py-sm mt-xs mb-[4px] gap-2 active:opacity-70"
+          >
+            {!query.trim() && (
+              <MaterialIcons
+                name={expandedFolders.has(section.title) ? "keyboard-arrow-down" : "keyboard-arrow-right"}
+                size={20}
+                color={colors.textSecondary}
+              />
+            )}
+            <MaterialIcons
+              name={expandedFolders.has(section.title) ? "folder-open" : "folder"}
+              size={20}
+              color={colors.warm300}
+            />
+            <Text className="text-textPrimary text-sm font-bold flex-1">
+              {section.title}
+            </Text>
+            <Text className="text-textSecondary text-xs">
+              {section.originalData?.length ?? section.data.length} files
+            </Text>
+          </Pressable>
+        )}
+        renderItem={({ item, section }) => (
+          <View className="pl-6 border-l border-rim ml-xs">
+            {renderItem({ item })}
+          </View>
+        )}
         ListEmptyComponent={
-          <Text style={styles.emptyText}>
+          <Text className="text-textSecondary text-[13px] text-center mt-lg">
             No files found for this query. Try a different name or clear the filter.
           </Text>
         }
       />
 
-      {loading ? <Text style={styles.infoText}>Updating explorer...</Text> : null}
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      {loading ? <Text className="text-textSecondary text-xs mt-sm">Updating explorer...</Text> : null}
+      {error ? <Text className="text-danger text-xs mt-sm">{error}</Text> : null}
+
+      {selectedUris.size > 0 && (
+        <View className="absolute bottom-4 left-4 right-4 items-center">
+          <GlassCard className="flex-row items-center gap-md py-3 px-lg shadow-black/50 shadow-lg border-warm500 bg-void01">
+            <Text className="text-textPrimary text-[15px] font-extrabold">{selectedUris.size} selected</Text>
+            
+            <View className="flex-row gap-2">
+              <Pressable
+                className="px-3 py-2 rounded-pill bg-glass10 border border-rim"
+                onPress={() => setSelectedUris(new Set())}
+              >
+                <Text className="text-textSecondary text-xs font-bold">Clear</Text>
+              </Pressable>
+              <Pressable
+                className="px-4 py-2 rounded-pill bg-warm500"
+                onPress={async () => {
+                  if (!selectedCategoryId) {
+                    Alert.alert('Select a category', 'Choose a category to bookmark into.');
+                    return;
+                  }
+                  
+                  try {
+                    const filesToBookmark = explorerFiles.filter(f => selectedUris.has(f.uri));
+                    for (const file of filesToBookmark) {
+                      await bookmarkFile(file, selectedCategoryId);
+                    }
+                    setSelectedUris(new Set());
+                    Alert.alert('Batch Complete', `Ghost Bookmarked ${filesToBookmark.length} items`);
+                  } catch (e) {
+                    Alert.alert('Error', 'Failed to bookmark all items');
+                  }
+                }}
+              >
+                <Text className="text-textPrimary text-xs font-bold">Bookmark All</Text>
+              </Pressable>
+            </View>
+          </GlassCard>
+        </View>
+      )}
     </AppScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  header: {
-    marginBottom: spacing.md,
-    gap: 4,
-  },
-  title: {
-    color: colors.textPrimary,
-    fontSize: 26,
-    fontWeight: '800',
-  },
-  subtitle: {
-    color: colors.textSecondary,
-    fontSize: 13,
-    lineHeight: 19,
-  },
-  sectionTitle: {
-    color: colors.textPrimary,
-    fontSize: 15,
-    fontWeight: '700',
-    marginBottom: spacing.sm,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.rim,
-    borderRadius: radius.chip,
-    color: colors.textPrimary,
-    backgroundColor: colors.glass04,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-  },
-  categoryRow: {
-    marginTop: spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  categoryLabel: {
-    color: colors.textTertiary,
-    fontSize: 12,
-    textTransform: 'uppercase',
-  },
-  categoryValue: {
-    color: colors.warm300,
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  chipRow: {
-    gap: spacing.sm,
-    paddingVertical: spacing.sm,
-  },
-  chip: {
-    borderWidth: 1,
-    borderColor: colors.rim,
-    borderRadius: radius.pill,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    backgroundColor: colors.glass04,
-  },
-  chipSelected: {
-    backgroundColor: 'rgba(217,123,60,0.16)',
-    borderColor: 'rgba(217,123,60,0.4)',
-  },
-  chipText: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  chipTextSelected: {
-    color: colors.warm300,
-  },
-  fileList: {
-    gap: spacing.sm,
-    paddingBottom: spacing.xxl,
-  },
-  fileCard: {
-    marginBottom: spacing.sm,
-  },
-  fileTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: spacing.md,
-  },
-  fileName: {
-    color: colors.textPrimary,
-    fontSize: 14,
-    fontWeight: '700',
-    flex: 1,
-  },
-  fileSize: {
-    color: colors.textSecondary,
-    fontSize: 12,
-  },
-  fileMeta: {
-    color: colors.textTertiary,
-    fontSize: 12,
-    marginTop: 5,
-  },
-  fileActions: {
-    marginTop: spacing.sm,
-    flexDirection: 'row',
-  },
-  actionButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: radius.pill,
-  },
-  primaryAction: {
-    backgroundColor: colors.warm500,
-  },
-  primaryActionText: {
-    color: colors.textPrimary,
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  emptyText: {
-    color: colors.textSecondary,
-    fontSize: 13,
-    textAlign: 'center',
-    marginTop: spacing.lg,
-  },
-  infoText: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    marginTop: spacing.sm,
-  },
-  errorText: {
-    color: colors.danger,
-    fontSize: 12,
-    marginTop: spacing.sm,
-  },
-});

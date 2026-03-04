@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { usePreventScreenCapture } from 'expo-screen-capture';
 import {
   Alert,
   Pressable,
@@ -17,6 +18,8 @@ import { useVaultStore } from '@/src/stores/useVaultStore';
 import { colors, radius, spacing } from '@/src/theme/tokens';
 
 export default function VaultScreen() {
+  usePreventScreenCapture();
+  
   const initialized = useFileStore((state) => state.initialized);
   const ghostLinks = useFileStore((state) => state.ghostLinks);
   const initialize = useFileStore((state) => state.initialize);
@@ -106,22 +109,22 @@ export default function VaultScreen() {
 
   return (
     <AppScreen>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Kosh Vault</Text>
-          <Text style={styles.subtitle}>Secure area for private ghost bookmarks. Theme shifts to teal.</Text>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName="gap-md pb-xxl">
+        <View className="gap-1">
+          <Text className="text-tealGlow text-[26px] font-extrabold">Kosh Vault</Text>
+          <Text className="text-textSecondary text-[13px] leading-[19px]">Secure area for private ghost bookmarks. Theme shifts to teal.</Text>
         </View>
 
         {!configured ? (
-          <GlassCard style={styles.koshCard}>
-            <Text style={styles.sectionTitle}>Setup vault</Text>
+          <GlassCard className="border-[rgba(0,229,204,0.35)] bg-[rgba(29,43,83,0.26)]">
+            <Text className="text-textPrimary text-[15px] font-bold mb-sm">Setup vault</Text>
             <TextInput
               value={setupPasscode}
               onChangeText={setSetupPasscode}
               placeholder="Create passcode"
               secureTextEntry
               placeholderTextColor={colors.textTertiary}
-              style={styles.input}
+              className="border border-[rgba(0,229,204,0.25)] rounded-chip text-textPrimary bg-[rgba(0,0,0,0.35)] px-3 py-2.5 mb-sm"
             />
             <TextInput
               value={setupConfirmPasscode}
@@ -129,60 +132,60 @@ export default function VaultScreen() {
               placeholder="Confirm passcode"
               secureTextEntry
               placeholderTextColor={colors.textTertiary}
-              style={styles.input}
+              className="border border-[rgba(0,229,204,0.25)] rounded-chip text-textPrimary bg-[rgba(0,0,0,0.35)] px-3 py-2.5 mb-sm"
             />
-            <Pressable style={styles.tealButton} onPress={handleSetup}>
-              <Text style={styles.tealButtonText}>Enable Kosh</Text>
+            <Pressable className="bg-tealGlow rounded-pill py-2.5 items-center mt-[2px]" onPress={handleSetup}>
+              <Text className="text-[#042A26] font-extrabold text-[13px]">Enable Kosh</Text>
             </Pressable>
           </GlassCard>
         ) : null}
 
         {configured && !unlocked ? (
-          <GlassCard style={styles.koshCard}>
-            <Text style={styles.sectionTitle}>Unlock vault</Text>
+          <GlassCard className="border-[rgba(0,229,204,0.35)] bg-[rgba(29,43,83,0.26)]">
+            <Text className="text-textPrimary text-[15px] font-bold mb-sm">Unlock vault</Text>
             <TextInput
               value={unlockPasscode}
               onChangeText={setUnlockPasscode}
               placeholder="Enter passcode"
               secureTextEntry
               placeholderTextColor={colors.textTertiary}
-              style={styles.input}
+              className="border border-[rgba(0,229,204,0.25)] rounded-chip text-textPrimary bg-[rgba(0,0,0,0.35)] px-3 py-2.5 mb-sm"
             />
-            <Pressable style={styles.tealButton} onPress={handleUnlock}>
-              <Text style={styles.tealButtonText}>Unlock</Text>
+            <Pressable className="bg-tealGlow rounded-pill py-2.5 items-center mt-[2px]" onPress={handleUnlock}>
+              <Text className="text-[#042A26] font-extrabold text-[13px]">Unlock</Text>
             </Pressable>
           </GlassCard>
         ) : null}
 
         {configured && unlocked ? (
           <>
-            <GlassCard style={styles.koshCard}>
-              <View style={styles.rowBetween}>
-                <Text style={styles.sectionTitle}>Vault entries ({vaultLinks.length})</Text>
-                <Pressable onPress={handleLock} style={styles.secondaryButton}>
-                  <Text style={styles.secondaryButtonText}>Lock</Text>
+            <GlassCard className="border-[rgba(0,229,204,0.35)] bg-[rgba(29,43,83,0.26)]">
+              <View className="flex-row justify-between items-center mb-sm">
+                <Text className="text-textPrimary text-[15px] font-bold">Vault entries ({vaultLinks.length})</Text>
+                <Pressable onPress={handleLock} className="px-3 py-[7px] rounded-pill border border-rim bg-glass04">
+                  <Text className="text-textSecondary text-xs font-semibold">Lock</Text>
                 </Pressable>
               </View>
 
               {vaultLinks.length === 0 ? (
-                <Text style={styles.emptyText}>No entries in vault yet.</Text>
+                <Text className="text-textSecondary text-[13px]">No entries in vault yet.</Text>
               ) : (
                 vaultLinks.map((link) => (
-                  <View key={link.id} style={styles.entryRow}>
-                    <View style={styles.entryTextWrap}>
-                      <Text numberOfLines={1} style={styles.entryTitle}>
+                  <View key={link.id} className="flex-row justify-between items-center gap-md py-2 border-b border-rim">
+                    <View className="flex-1 min-w-0">
+                      <Text numberOfLines={1} className="text-textPrimary text-[13px] font-bold">
                         {link.fileName}
                       </Text>
-                      <Text style={styles.entryMeta}>{link.storageSource}</Text>
+                      <Text className="text-textTertiary text-[11px] mt-[2px]">{link.storageSource}</Text>
                     </View>
                     <Pressable
                       onPress={async () => {
                         await removeEntry(link.id);
                         await refreshData();
                       }}
-                      style={styles.removeButton}
+                      className="rounded-pill bg-[rgba(255,71,87,0.2)] px-3 py-[7px] border border-[rgba(255,71,87,0.45)]"
                     >
-                      <Text style={styles.removeButtonText}>Remove</Text>
+                      <Text className="text-[#FF8E97] text-xs font-bold">Remove</Text>
                     </Pressable>
                   </View>
                 ))
@@ -190,28 +193,28 @@ export default function VaultScreen() {
             </GlassCard>
 
             <GlassCard>
-              <Text style={styles.sectionTitle}>Add from existing bookmarks</Text>
+              <Text className="text-textPrimary text-[15px] font-bold mb-sm">Add from existing bookmarks</Text>
               {addableLinks.length === 0 ? (
-                <Text style={styles.emptyText}>
+                <Text className="text-textSecondary text-[13px]">
                   All bookmarks are already in Kosh or no bookmarks exist.
                 </Text>
               ) : (
                 addableLinks.map((link) => (
-                  <View key={link.id} style={styles.entryRow}>
-                    <View style={styles.entryTextWrap}>
-                      <Text numberOfLines={1} style={styles.entryTitle}>
+                  <View key={link.id} className="flex-row justify-between items-center gap-md py-2 border-b border-rim">
+                    <View className="flex-1 min-w-0">
+                      <Text numberOfLines={1} className="text-textPrimary text-[13px] font-bold">
                         {link.fileName}
                       </Text>
-                      <Text style={styles.entryMeta}>{link.storageSource}</Text>
+                      <Text className="text-textTertiary text-[11px] mt-[2px]">{link.storageSource}</Text>
                     </View>
                     <Pressable
                       onPress={async () => {
                         await addEntry(link.id);
                         await refreshData();
                       }}
-                      style={styles.addButton}
+                      className="rounded-pill bg-tealGlow px-3 py-[7px]"
                     >
-                      <Text style={styles.addButtonText}>Add</Text>
+                      <Text className="text-[#03231F] text-xs font-bold">Add</Text>
                     </Pressable>
                   </View>
                 ))
@@ -220,138 +223,9 @@ export default function VaultScreen() {
           </>
         ) : null}
 
-        {loading ? <Text style={styles.infoText}>Updating vault...</Text> : null}
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        {loading ? <Text className="text-textSecondary text-xs">Updating vault...</Text> : null}
+        {error ? <Text className="text-danger text-xs">{error}</Text> : null}
       </ScrollView>
     </AppScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  content: {
-    gap: spacing.md,
-    paddingBottom: spacing.xxl,
-  },
-  header: {
-    gap: 4,
-  },
-  title: {
-    color: colors.tealGlow,
-    fontSize: 26,
-    fontWeight: '800',
-  },
-  subtitle: {
-    color: colors.textSecondary,
-    fontSize: 13,
-    lineHeight: 19,
-  },
-  koshCard: {
-    borderColor: 'rgba(0,229,204,0.35)',
-    backgroundColor: 'rgba(29,43,83,0.26)',
-  },
-  sectionTitle: {
-    color: colors.textPrimary,
-    fontSize: 15,
-    fontWeight: '700',
-    marginBottom: spacing.sm,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: 'rgba(0,229,204,0.25)',
-    borderRadius: radius.chip,
-    color: colors.textPrimary,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: spacing.sm,
-  },
-  tealButton: {
-    backgroundColor: colors.tealGlow,
-    borderRadius: radius.pill,
-    paddingVertical: 10,
-    alignItems: 'center',
-    marginTop: 2,
-  },
-  tealButtonText: {
-    color: '#042A26',
-    fontWeight: '800',
-    fontSize: 13,
-  },
-  rowBetween: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  secondaryButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: colors.rim,
-    backgroundColor: colors.glass04,
-  },
-  secondaryButtonText: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  entryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: spacing.md,
-    paddingVertical: 8,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.rim,
-  },
-  entryTextWrap: {
-    flex: 1,
-    minWidth: 0,
-  },
-  entryTitle: {
-    color: colors.textPrimary,
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  entryMeta: {
-    color: colors.textTertiary,
-    fontSize: 11,
-    marginTop: 2,
-  },
-  addButton: {
-    borderRadius: radius.pill,
-    backgroundColor: colors.tealGlow,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-  },
-  addButtonText: {
-    color: '#03231F',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  removeButton: {
-    borderRadius: radius.pill,
-    backgroundColor: 'rgba(255,71,87,0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderWidth: 1,
-    borderColor: 'rgba(255,71,87,0.45)',
-  },
-  removeButtonText: {
-    color: '#FF8E97',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  emptyText: {
-    color: colors.textSecondary,
-    fontSize: 13,
-  },
-  infoText: {
-    color: colors.textSecondary,
-    fontSize: 12,
-  },
-  errorText: {
-    color: colors.danger,
-    fontSize: 12,
-  },
-});
