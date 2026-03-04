@@ -1,0 +1,50 @@
+{
+  "translation": {
+    "common": {
+      "cancel": "Cancel",
+      "confirm": "Confirm",
+      "settings": "Settings",
+      "loading": "Loading..."
+    },
+    "home": {
+      "dashboard_title": "Bento Dashboard",
+      "dashboard_subtitle": "Long-press logo for hidden Kosh entry. Current mode: {{mode}}",
+      "metric_bookmarks": "Bookmarks",
+      "metric_storage": "Storage",
+      "metric_kosh": "Kosh",
+      "find_categories": "Find categories",
+      "search_placeholder": "Search categories",
+      "create_category": "Create category",
+      "category_name_placeholder": "Category name",
+      "add_button": "Add",
+      "recent_activity": "Recent activity",
+      "empty_bookmarks": "No bookmarks yet. Open Explorer to start ghost bookmarking."
+    },
+    "explorer": {
+      "title": "Explorer",
+      "subtitle": "Browsing source files and pinning ghost bookmarks.",
+      "search_files": "Search files",
+      "search_placeholder": "Search by file name or type",
+      "category_label": "Category:",
+      "none": "None",
+      "empty_files": "No files found for this query. Try a different name or clear the filter."
+    },
+    "vault": {
+      "title": "Kosh Vault",
+      "subtitle": "Secure area for private ghost bookmarks. Theme shifts to teal.",
+      "setup_vault": "Setup vault",
+      "create_passcode": "Create passcode",
+      "confirm_passcode": "Confirm passcode",
+      "enable_kosh": "Enable Kosh",
+      "unlock_vault": "Unlock vault",
+      "enter_passcode": "Enter passcode",
+      "unlock": "Unlock",
+      "vault_entries": "Vault entries ({{count}})",
+      "lock": "Lock",
+      "empty_entries": "No entries in vault yet.",
+      "add_existing": "Add from existing bookmarks",
+      "add": "Add",
+      "remove": "Remove"
+    }
+  }
+}

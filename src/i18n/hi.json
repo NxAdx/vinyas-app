@@ -1,0 +1,50 @@
+{
+  "translation": {
+    "common": {
+      "cancel": "रद्द करें",
+      "confirm": "पुष्टि करें",
+      "settings": "सेटिंग्स",
+      "loading": "लोड हो रहा है..."
+    },
+    "home": {
+      "dashboard_title": "बेंटो डैशबोर्ड",
+      "dashboard_subtitle": "कोष के लिए लोगो को देर तक दबाएं। वर्तमान मोड: {{mode}}",
+      "metric_bookmarks": "बुकमार्क",
+      "metric_storage": "स्टोरेज",
+      "metric_kosh": "कोष",
+      "find_categories": "श्रेणियां खोजें",
+      "search_placeholder": "श्रेणियां खोजें",
+      "create_category": "श्रेणी बनाएं",
+      "category_name_placeholder": "श्रेणी का नाम",
+      "add_button": "जोड़ें",
+      "recent_activity": "हाल की गतिविधि",
+      "empty_bookmarks": "अभी तक कोई बुकमार्क नहीं। घोस्ट बुकमार्किंग शुरू करने के लिए एक्सप्लोरर खोलें।"
+    },
+    "explorer": {
+      "title": "एक्सप्लोरर",
+      "subtitle": "स्रोत फ़ाइलें ब्राउज़ करें और घोस्ट बुकमार्क पिन करें।",
+      "search_files": "फ़ाइलें खोजें",
+      "search_placeholder": "फ़ाइल के नाम या प्रकार से खोजें",
+      "category_label": "श्रेणी:",
+      "none": "कोई नहीं",
+      "empty_files": "इस खोज के लिए कोई फ़ाइल नहीं मिली। अन्य नाम आज़माएं।"
+    },
+    "vault": {
+      "title": "कोष वॉल्ट",
+      "subtitle": "निजी घोस्ट बुकमार्क के लिए सुरक्षित क्षेत्र।",
+      "setup_vault": "वॉल्ट सेटअप करें",
+      "create_passcode": "पासकोड बनाएं",
+      "confirm_passcode": "पासकोड की पुष्टि करें",
+      "enable_kosh": "कोष सक्षम करें",
+      "unlock_vault": "वॉल्ट अनलॉक करें",
+      "enter_passcode": "पासकोड दर्ज करें",
+      "unlock": "अनलॉक",
+      "vault_entries": "वॉल्ट प्रविष्टियाँ ({{count}})",
+      "lock": "लॉक",
+      "empty_entries": "वॉल्ट में अभी तक कोई प्रविष्टि नहीं।",
+      "add_existing": "मौजूदा बुकमार्क से जोड़ें",
+      "add": "जोड़ें",
+      "remove": "हटाएं"
+    }
+  }
+}

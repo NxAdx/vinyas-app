@@ -1,33 +1,80 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
+import { MaterialIcons } from '@expo/vector-icons';
+import { Tabs, useSegments } from 'expo-router';
+import type { ComponentProps } from 'react';
+import { useEffect } from 'react';
 
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useAppStore } from '@/src/stores/useAppStore';
+import { colors } from '@/src/theme/tokens';
+
+function TabIcon({
+  color,
+  size,
+  name,
+}: {
+  color: string;
+  size: number;
+  name: ComponentProps<typeof MaterialIcons>['name'];
+}) {
+  return <MaterialIcons name={name} size={size} color={color} />;
+}
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const setActiveTab = useAppStore((state) => state.setActiveTab);
+  const globalMode = useAppStore((state) => state.globalMode);
+  const segments = useSegments();
+
+  const activeTint = globalMode === 'kosh' ? colors.tealGlow : colors.warm500;
+
+  useEffect(() => {
+    const currentSegment = segments[segments.length - 1] ?? 'index';
+    setActiveTab(String(currentSegment));
+  }, [segments, setActiveTab]);
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
-        tabBarButton: HapticTab,
-      }}>
+        tabBarStyle: {
+          backgroundColor: colors.void01,
+          borderTopColor: colors.rim,
+          height: 64,
+          paddingTop: 6,
+          paddingBottom: 6,
+        },
+        tabBarActiveTintColor: activeTint,
+        tabBarInactiveTintColor: colors.textTertiary,
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '600',
+        },
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          tabBarIcon: ({ color, size }) => <TabIcon color={color} size={size} name="dashboard" />,
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="explorer"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: 'Explorer',
+          tabBarIcon: ({ color, size }) => <TabIcon color={color} size={size} name="folder-open" />,
+        }}
+      />
+      <Tabs.Screen
+        name="vault"
+        options={{
+          title: 'Kosh',
+          tabBarIcon: ({ color, size }) => <TabIcon color={color} size={size} name="lock" />,
+        }}
+      />
+      <Tabs.Screen
+        name="analytics"
+        options={{
+          title: 'Analytics',
+          tabBarIcon: ({ color, size }) => <TabIcon color={color} size={size} name="insights" />,
         }}
       />
     </Tabs>
