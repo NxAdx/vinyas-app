@@ -21,8 +21,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     initialize: async () => {
         try {
             const storedPin = await SecureStore.getItemAsync(PIN_STORAGE_KEY);
-            set({ hasPin: !!storedPin, isAuthenticated: !storedPin });
-            // If no PIN is configured, they are "authenticated" by default until they set one
+            const exists = !!storedPin;
+            set({ 
+                hasPin: exists, 
+                isAuthenticated: !exists // If no PIN, you are "unlocked"
+            });
         } catch (e) {
             set({ hasPin: false, isAuthenticated: true });
         }

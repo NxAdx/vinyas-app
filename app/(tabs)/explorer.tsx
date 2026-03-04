@@ -38,6 +38,7 @@ export default function ExplorerScreen() {
   const setSelectedCategoryId = useFileStore((state) => state.setSelectedCategoryId);
   const bookmarkFile = useFileStore((state) => state.bookmarkFile);
   const removeGhostLinkByUri = useFileStore((state) => state.removeGhostLinkByUri);
+  const grantAccess = useFileStore((state) => state.grantAccess);
   const error = useFileStore((state) => state.error);
 
   const { q } = useLocalSearchParams<{ q?: string }>();
@@ -254,7 +255,7 @@ export default function ExplorerScreen() {
           </Text>
           <Pressable
             onPress={async () => {
-              await refreshExplorer(query);
+              await grantAccess();
             }}
             className="bg-warm500 rounded-pill px-6 py-3 items-center active:bg-warm300"
           >

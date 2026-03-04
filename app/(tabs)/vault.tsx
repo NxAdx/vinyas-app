@@ -123,9 +123,14 @@ export default function VaultScreen() {
   return (
     <AppScreen>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName="gap-md pb-xxl">
-        <View className="gap-1">
-          <Text className="text-textPrimary text-[26px] font-extrabold">Kosh Vault</Text>
-          <Text className="text-textSecondary text-[13px] leading-[19px]">Secure area for private ghost bookmarks.</Text>
+        <View className="flex-row items-center gap-3">
+          <View className="bg-warm500/10 p-2 rounded-xl border border-warm500/20">
+             <MaterialIcons name="lock-person" size={28} color={colors.warm300} />
+          </View>
+          <View>
+            <Text className="text-textPrimary text-[26px] font-extrabold tracking-tight">Kosh Vault</Text>
+            <Text className="text-textSecondary text-[12px] opacity-80">Secure area for private ghost bookmarks.</Text>
+          </View>
         </View>
 
         {!configured ? (

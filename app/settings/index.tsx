@@ -54,6 +54,7 @@ export default function SettingsScreen() {
   const hydrateVault = useVaultStore((state) => state.hydrate);
 
   const hasPin = useAuthStore((state) => state.hasPin);
+  const setPin = useAuthStore((state) => state.setPin);
   const clearPin = useAuthStore((state) => state.clearPin);
   const logout = useAuthStore((state) => state.logout);
 
@@ -67,28 +68,48 @@ export default function SettingsScreen() {
         const update = await Updates.checkForUpdateAsync();
         if (update.isAvailable) {
           Alert.alert(
-            'Update Available',
-            'A new Over-The-Air update is available. Download and restart?',
+            'OTA Update Available',
+            'A new patch is available. Installing this will refresh the app to the latest version.',
             [
-              { text: 'Cancel', style: 'cancel' },
+              { text: 'Later', style: 'cancel' },
               {
-                text: 'Install',
+                text: 'Update & Restart',
                 onPress: async () => {
-                  await Updates.fetchUpdateAsync();
-                  await Updates.reloadAsync();
+                  try {
+                    await Updates.fetchUpdateAsync();
+                    await Updates.reloadAsync();
+                  } catch (e) {
+                    Alert.alert('Update Failed', 'The download was interrupted. Please try again later.');
+                  }
                 },
               },
             ]
           );
         } else {
-          Alert.alert('Up to date', 'Vinyas is running the latest version.');
+          Alert.alert('System Up to Date', 'Vinyas is running the latest production bundle.');
         }
       } else {
-        Alert.alert('OTA Disabled', 'Over-The-Air updates are not fully configured for this build.');
+        Alert.alert('Developer Build', 'OTA Updates are disabled in development or unlinked builds.');
       }
     } catch (e: any) {
-      Alert.alert('Update Error', 'Could not connect to update server. Check your connection.');
+      console.error('OTA Error:', e);
+      Alert.alert('Sync Error', 'Could not reach the update server. Please check your internet connection.');
     }
+  };
+
+  const handleSetPin = () => {
+    // In a production app, we would use a numeric keypad modal.
+    // For this prototype, we simulate setting a 4-digit PIN for demo.
+    Alert.alert('Set Master PIN', 'Enter a 6-digit PIN to secure your Vinyas vault.', [
+      { text: 'Cancel', style: 'cancel' },
+      { 
+        text: 'Set PIN (123456)', 
+        onPress: async () => {
+          await setPin('123456');
+          Alert.alert('PIN Set', 'Your Master PIN is now active. Use it to unlock the app.');
+        } 
+      },
+    ]);
   };
 
   return (
@@ -100,25 +121,25 @@ export default function SettingsScreen() {
 
         {/* Theme */}
         <GlassCard>
-          <Text className="text-textPrimary text-[15px] font-bold mb-sm">Theme mode</Text>
-          <Text className="text-textSecondary text-[13px] mb-sm">
-            Current mode: {globalMode.toUpperCase()}
+          <Text className="text-textPrimary text-[15px] font-bold mb-xs">Theme mode</Text>
+          <Text className="text-textSecondary text-[12px] mb-md font-medium">
+            Toggle between Amoled Dark and Glass Light variants.
           </Text>
           <Pressable
             onPress={async () => {
               toggleGlobalMode();
-              Alert.alert('Theme Changed', 'Restarting app to apply theme colors globally.', [
+              Alert.alert('Theme Override', 'The app will now reload to apply the new design system globally.', [
                 {
-                  text: 'Restart Now',
+                  text: 'Apply & Restart',
                   onPress: async () => {
                     await Updates.reloadAsync();
                   }
                 }
               ]);
             }}
-            className="bg-textPrimary rounded-pill py-2.5 items-center active:bg-textSecondary"
+            className="bg-warm500 rounded-pill py-3 items-center active:bg-warm300"
           >
-            <Text className="text-void font-bold text-[13px]">Force Toggle Theme</Text>
+            <Text className="text-void font-extrabold text-[13px]">Apply Theme Switch</Text>
           </Pressable>
         </GlassCard>
 
@@ -139,14 +160,14 @@ export default function SettingsScreen() {
                       { text: 'Remove', style: 'destructive', onPress: () => void clearPin() },
                     ]);
                   }}
-                  className="flex-1 rounded-pill border border-[rgba(255,71,87,0.4)] bg-[rgba(255,71,87,0.16)] py-2.5 items-center active:bg-[rgba(255,71,87,0.3)]"
+                  className="flex-1 rounded-pill border border-[rgba(255,71,87,0.4)] bg-[rgba(255,71,87,0.1) ] py-2.5 items-center active:bg-[rgba(255,71,87,0.2)]"
                 >
                   <Text className="text-[#FF9EA6] text-xs font-bold">Remove PIN</Text>
                 </Pressable>
                 <Pressable
                   onPress={() => {
                     logout();
-                    Alert.alert('Locked', 'Vinyas is now locked. Re-enter your PIN to continue.');
+                    Alert.alert('Security Locked', 'Vinyas is now locked. Re-enter your PIN to continue.');
                   }}
                   className="flex-1 rounded-pill border border-rim bg-glass07 py-2.5 items-center active:bg-glass10"
                 >
@@ -154,9 +175,12 @@ export default function SettingsScreen() {
                 </Pressable>
               </>
             ) : (
-              <Text className="text-textTertiary text-[11px]">
-                Set a PIN from the lock screen on next app restart.
-              </Text>
+              <Pressable
+                onPress={handleSetPin}
+                className="flex-1 bg-warm500 rounded-pill py-2.5 items-center active:bg-warm300"
+              >
+                <Text className="text-void text-xs font-bold">Set Master PIN</Text>
+              </Pressable>
             )}
           </View>
         </GlassCard>

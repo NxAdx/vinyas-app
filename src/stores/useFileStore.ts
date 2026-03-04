@@ -15,6 +15,7 @@ interface FileState {
   initialize: () => Promise<void>;
   refreshData: () => Promise<void>;
   refreshExplorer: (query?: string) => Promise<void>;
+  grantAccess: () => Promise<void>;
   createNewCategory: (name: string) => Promise<void>;
   setSelectedCategoryId: (id: string | null) => void;
   bookmarkFile: (item: ExplorerFileItem, categoryId: string) => Promise<void>;
@@ -107,6 +108,22 @@ export const useFileStore = create<FileState>((set, get) => ({
       const { FileService } = await import('../services/file.service');
       const files = await FileService.scanDeviceStorage(query);
       set({ explorerFiles: files, loading: false });
+    } catch (e) {
+      set({ error: (e as Error).message, loading: false });
+    }
+  },
+
+  grantAccess: async () => {
+    set({ loading: true, error: null });
+    try {
+      const { FileService } = await import('../services/file.service');
+      const granted = await FileService.requestPermissions(true);
+      if (granted) {
+        const files = await FileService.scanDeviceStorage();
+        set({ explorerFiles: files, loading: false });
+      } else {
+        set({ error: 'Storage access was not granted.', loading: false });
+      }
     } catch (e) {
       set({ error: (e as Error).message, loading: false });
     }

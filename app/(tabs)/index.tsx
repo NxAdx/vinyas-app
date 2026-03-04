@@ -43,6 +43,7 @@ export default function HomeScreen() {
   const categories = useFileStore((state) => state.categories);
   const ghostLinks = useFileStore((state) => state.ghostLinks);
   const initialize = useFileStore((state) => state.initialize);
+  const grantAccess = useFileStore((state) => state.grantAccess);
 
   const hydrateVault = useVaultStore((state) => state.hydrate);
   const unlockedVault = useVaultStore((state) => state.unlocked);
@@ -50,6 +51,12 @@ export default function HomeScreen() {
   const setHasLoadedApp = useAppStore((state) => state.setHasLoadedApp);
   const globalMode = useAppStore((state) => state.globalMode);
   const setGlobalMode = useAppStore((state) => state.setGlobalMode);
+
+  const handleStoragePress = async () => {
+    await grantAccess();
+    router.push('/(tabs)/explorer');
+  };
+
 
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -190,7 +197,7 @@ export default function HomeScreen() {
           <Text className="text-textPrimary text-[15px] font-bold mb-sm">Storage devices</Text>
           <View className="gap-[2px]">
             <Pressable
-              onPress={() => router.push('/(tabs)/explorer')}
+              onPress={handleStoragePress}
               className="flex-row items-center justify-between bg-glass04 px-4 py-3 rounded-t-chip border border-rim active:bg-glass07"
             >
               <View className="flex-row items-center gap-3">
@@ -204,7 +211,7 @@ export default function HomeScreen() {
             </Pressable>
             
             <Pressable
-              onPress={() => router.push('/(tabs)/explorer')}
+              onPress={handleStoragePress}
               className="flex-row items-center justify-between bg-glass04 px-4 py-3 rounded-b-chip border border-rim active:bg-glass07"
             >
               <View className="flex-row items-center gap-3">

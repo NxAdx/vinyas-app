@@ -70,8 +70,12 @@ export default function CategoryDetailScreen() {
     <AppScreen>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.title}>{category?.name ?? 'Category'}</Text>
-          <Text style={styles.subtitle}>Ghost links pinned under this category.</Text>
+          <Text style={styles.title}>{category?.name ?? 'Other category'}</Text>
+          <Text style={styles.subtitle}>
+            {categoryId === 'cat-other' 
+              ? 'Uncategorized items and recently accessed files.' 
+              : 'Ghost links pinned under this category.'}
+          </Text>
         </View>
 
         <GlassCard>

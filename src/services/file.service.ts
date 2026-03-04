@@ -24,10 +24,12 @@ export const FileService = {
     return null;
   },
 
-  async requestPermissions(): Promise<boolean> {
+  async requestPermissions(force = false): Promise<boolean> {
     try {
-      const existingUri = await this.getSavedUri();
-      if (existingUri) return true;
+      if (!force) {
+        const existingUri = await this.getSavedUri();
+        if (existingUri) return true;
+      }
 
       const permissions = await StorageAccessFramework.requestDirectoryPermissionsAsync();
       
@@ -43,14 +45,20 @@ export const FileService = {
   },
 
   async scanDeviceStorage(query?: string): Promise<ExplorerFileItem[]> {
-    const hasPermission = await this.requestPermissions();
+    let hasPermission = await this.requestPermissions(false);
     if (!hasPermission) {
       throw new Error('Storage permission denied. Please grant access to a folder.');
     }
 
     try {
-      const directoryUri = await this.getSavedUri();
-      if (!directoryUri) throw new Error('No directory URI found.');
+      let directoryUri = await this.getSavedUri();
+      if (!directoryUri) {
+        hasPermission = await this.requestPermissions(true);
+        if (!hasPermission) throw new Error('No directory URI found.');
+        directoryUri = await this.getSavedUri();
+      }
+
+      if (!directoryUri) throw new Error('Failed to obtain storage URI.');
 
       const filesRefs = await StorageAccessFramework.readDirectoryAsync(directoryUri);
       
