@@ -63,7 +63,7 @@
       "fallbackToCacheTimeout": 0
     },
     "experiments": {
-      "typedRoutes": true,
+      "typedRoutes": false,
       "reactCompiler": true
     }
   }

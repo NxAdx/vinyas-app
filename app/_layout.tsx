@@ -1,12 +1,42 @@
 import '../global.css';
-import { Stack } from 'expo-router';
+import { useEffect } from 'react';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
 import { colors } from '@/src/theme/tokens';
+import { useAuthStore } from '@/src/stores/useAuthStore';
+import { OtaUpdater } from '@/src/components/OtaUpdater';
 
 export default function RootLayout() {
+  const router = useRouter();
+  const segments = useSegments();
+
+  const initialize = useAuthStore((state) => state.initialize);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const hasPin = useAuthStore((state) => state.hasPin);
+
+  useEffect(() => {
+    void initialize();
+  }, [initialize]);
+
+  useEffect(() => {
+    if (hasPin === null) return; // Still loading
+
+    // We are on the root level, redirect to login if not authenticated
+    const inTabsGroup = segments[0] === '(tabs)' || segments[0] === 'settings' || segments[0] === 'category';
+
+    if (!isAuthenticated && inTabsGroup) {
+      router.replace('/login');
+    } else if (isAuthenticated && segments[0] === 'login') {
+      router.replace('/(tabs)');
+    }
+  }, [isAuthenticated, hasPin, segments, router]);
+
+  if (hasPin === null) return null; // Show splash natively
+
   return (
     <>
+      <OtaUpdater />
       <StatusBar style="light" />
       <Stack
         screenOptions={{
@@ -14,9 +44,11 @@ export default function RootLayout() {
           contentStyle: {
             backgroundColor: colors.void,
           },
+          animation: 'fade', // Smoother transition for login
         }}
       >
-        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="login" options={{ gestureEnabled: false }} />
+        <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
         <Stack.Screen
           name="category/[id]"
           options={{
