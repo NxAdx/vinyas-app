@@ -15,12 +15,12 @@ import { GlassCard } from '@/src/components/GlassCard';
 import { useFileStore } from '@/src/stores/useFileStore';
 import { useVaultStore } from '@/src/stores/useVaultStore';
 import { useAppStore } from '@/src/stores/useAppStore';
-import { darkColors, lightColors } from '@/src/theme/tokens';
+import { THEME_DARK, THEME_LIGHT } from '../../src/theme/tokens';
 
 export default function CategoryDetailScreen() {
   const router = useRouter();
   const theme = useAppStore((state) => state.theme);
-  const colors = theme === 'dark' ? darkColors : lightColors;
+  const colors = theme === 'dark' ? THEME_DARK : THEME_LIGHT;
 
   const params = useLocalSearchParams<{ id: string }>();
   const categoryId = params.id;
@@ -76,8 +76,8 @@ export default function CategoryDetailScreen() {
         <View className="gap-1">
           <Text style={{ color: colors.textPrimary, fontSize: 24, fontWeight: '800' }}>{category?.name ?? 'Other category'}</Text>
           <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 18 }}>
-            {categoryId === 'cat-other' 
-              ? 'Uncategorized items and recently accessed files.' 
+            {categoryId === 'cat-other'
+              ? 'Uncategorized items and recently accessed files.'
               : 'Ghost links pinned under this category.'}
           </Text>
         </View>
@@ -89,11 +89,11 @@ export default function CategoryDetailScreen() {
             onChangeText={setQuery}
             placeholder="Search file name/type"
             placeholderTextColor={colors.textTertiary}
-            style={{ 
-              borderWidth: 1, 
-              borderColor: colors.rim, 
-              borderRadius: 24, 
-              color: colors.textPrimary, 
+            style={{
+              borderWidth: 1,
+              borderColor: colors.rim,
+              borderRadius: 24,
+              color: colors.textPrimary,
               backgroundColor: colors.glass04,
               paddingHorizontal: 16,
               paddingVertical: 12

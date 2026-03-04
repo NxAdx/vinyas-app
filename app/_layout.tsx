@@ -5,7 +5,7 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 
-import { darkColors, lightColors } from '@/src/theme/tokens';
+import { THEME_DARK, THEME_LIGHT } from '../src/theme/tokens';
 import { useAuthStore } from '@/src/stores/useAuthStore';
 import { useAppStore } from '@/src/stores/useAppStore';
 
@@ -22,7 +22,7 @@ export default function RootLayout() {
   const hasPin = useAuthStore((state) => state.hasPin);
 
   const theme = useAppStore((state) => state.theme);
-  const colors = theme === 'dark' ? darkColors : lightColors;
+  const colors = theme === 'dark' ? THEME_DARK : THEME_LIGHT;
 
   const [isReady, setIsReady] = useState(false);
 

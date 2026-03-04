@@ -19,16 +19,16 @@ import { GlassCard } from '@/src/components/GlassCard';
 import { useAppStore } from '@/src/stores/useAppStore';
 import { useFileStore } from '@/src/stores/useFileStore';
 import { useVaultStore } from '@/src/stores/useVaultStore';
-import { darkColors, lightColors, radius, spacing } from '@/src/theme/tokens';
+import { THEME_DARK, THEME_LIGHT, radius, spacing } from '../../src/theme/tokens';
 
 export default function VaultScreen() {
   const theme = useAppStore((state) => state.theme);
   const globalMode = useAppStore((state) => state.globalMode);
-  const colors = theme === 'dark' ? darkColors : lightColors;
-  
+  const colors = theme === 'dark' ? THEME_DARK : THEME_LIGHT;
+
   // Apply a subtle blue tint when in Kosh mode to indicate security
-  const koshBg = globalMode === 'kosh' 
-    ? (theme === 'dark' ? '#080C14' : '#F0F7FF') 
+  const koshBg = globalMode === 'kosh'
+    ? (theme === 'dark' ? '#080C14' : '#F0F7FF')
     : colors.void;
 
   const isFocused = useIsFocused();
@@ -138,20 +138,20 @@ export default function VaultScreen() {
     <AppScreen style={{ backgroundColor: koshBg }}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 16, paddingBottom: 60 }}>
         <View className="flex-row items-center gap-3">
-          <View 
+          <View
             className="p-2 rounded-xl border"
             style={{ backgroundColor: colors.glass07, borderColor: colors.rim }}
           >
-             <MaterialIcons name="lock-person" size={28} color={globalMode === 'kosh' ? colors.tealGlow : colors.warm300} />
+            <MaterialIcons name="lock-person" size={28} color={globalMode === 'kosh' ? colors.tealGlow : colors.warm300} />
           </View>
           <View>
-            <Text 
-               className="text-[26px] font-extrabold tracking-tight"
-               style={{ color: colors.textPrimary }}
+            <Text
+              className="text-[26px] font-extrabold tracking-tight"
+              style={{ color: colors.textPrimary }}
             >
               Kosh Vault
             </Text>
-            <Text 
+            <Text
               className="text-[12px] opacity-80"
               style={{ color: colors.textSecondary }}
             >
@@ -172,11 +172,11 @@ export default function VaultScreen() {
               keyboardType="number-pad"
               secureTextEntry
               placeholderTextColor={colors.textTertiary}
-              style={{ 
-                borderWidth: 1, 
-                borderColor: colors.rim, 
-                borderRadius: 16, 
-                color: colors.textPrimary, 
+              style={{
+                borderWidth: 1,
+                borderColor: colors.rim,
+                borderRadius: 16,
+                color: colors.textPrimary,
                 backgroundColor: colors.glass04,
                 paddingHorizontal: 16,
                 paddingVertical: 12,
@@ -191,19 +191,19 @@ export default function VaultScreen() {
               keyboardType="number-pad"
               secureTextEntry
               placeholderTextColor={colors.textTertiary}
-              style={{ 
-                borderWidth: 1, 
-                borderColor: colors.rim, 
-                borderRadius: 16, 
-                color: colors.textPrimary, 
+              style={{
+                borderWidth: 1,
+                borderColor: colors.rim,
+                borderRadius: 16,
+                color: colors.textPrimary,
                 backgroundColor: colors.glass04,
                 paddingHorizontal: 16,
                 paddingVertical: 12,
                 marginBottom: 20
               }}
             />
-            <Pressable 
-              className="rounded-pill py-3 items-center" 
+            <Pressable
+              className="rounded-pill py-3 items-center"
               style={{ backgroundColor: colors.warm500 }}
               onPress={handleSetup}
             >
@@ -230,19 +230,19 @@ export default function VaultScreen() {
               keyboardType="number-pad"
               secureTextEntry
               placeholderTextColor={colors.textTertiary}
-              style={{ 
-                borderWidth: 1, 
-                borderColor: colors.rim, 
-                borderRadius: 16, 
-                color: colors.textPrimary, 
+              style={{
+                borderWidth: 1,
+                borderColor: colors.rim,
+                borderRadius: 16,
+                color: colors.textPrimary,
                 backgroundColor: colors.glass04,
                 paddingHorizontal: 16,
                 paddingVertical: 12,
                 marginBottom: 20
               }}
             />
-            <Pressable 
-              className="rounded-pill py-3 items-center" 
+            <Pressable
+              className="rounded-pill py-3 items-center"
               style={{ backgroundColor: colors.warm500 }}
               onPress={handleUnlock}
             >
@@ -256,8 +256,8 @@ export default function VaultScreen() {
             <GlassCard>
               <View className="flex-row justify-between items-center mb-4">
                 <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '800' }}>Vault entries ({vaultLinks.length})</Text>
-                <Pressable 
-                  onPress={handleLock} 
+                <Pressable
+                  onPress={handleLock}
                   className="px-4 py-2 rounded-pill border"
                   style={{ backgroundColor: colors.glass04, borderColor: colors.rim }}
                 >

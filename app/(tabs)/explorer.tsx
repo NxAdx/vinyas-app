@@ -16,7 +16,7 @@ import { GlassCard } from '@/src/components/GlassCard';
 import type { ExplorerFileItem } from '@/src/types';
 import { useAppStore } from '@/src/stores/useAppStore';
 import { useFileStore } from '@/src/stores/useFileStore';
-import { darkColors, lightColors } from '@/src/theme/tokens';
+import { THEME_DARK, THEME_LIGHT } from '../../src/theme/tokens';
 
 function formatBytes(bytes: number): string {
   const mb = bytes / (1024 * 1024);
@@ -28,7 +28,7 @@ function formatBytes(bytes: number): string {
 
 export default function ExplorerScreen() {
   const theme = useAppStore((state) => state.theme);
-  const colors = theme === 'dark' ? darkColors : lightColors;
+  const colors = theme === 'dark' ? THEME_DARK : THEME_LIGHT;
 
   const initialized = useFileStore((state) => state.initialized);
   const loading = useFileStore((state) => state.loading);
@@ -81,8 +81,8 @@ export default function ExplorerScreen() {
       try {
         const parts = decodeURIComponent(file.uri).split('/');
         if (parts.length > 2) folderName = parts[parts.length - 2];
-      } catch {}
-      
+      } catch { }
+
       if (!map[folderName]) map[folderName] = [];
       map[folderName].push(file);
     });
@@ -131,9 +131,9 @@ export default function ExplorerScreen() {
         }}
         delayLongPress={200}
       >
-        <GlassCard 
-          style={{ 
-            marginBottom: 8, 
+        <GlassCard
+          style={{
+            marginBottom: 8,
             borderColor: isSelectedMode ? colors.warm500 : colors.rim,
             backgroundColor: isSelectedMode ? `${colors.warm500}11` : colors.glass04
           }}
@@ -153,7 +153,7 @@ export default function ExplorerScreen() {
           <View className="mt-2 flex-row">
             <Pressable
               className="px-3 py-2 rounded-pill border"
-              style={{ 
+              style={{
                 backgroundColor: isBookmarkedInSelectedCategory ? colors.glass10 : colors.warm500,
                 borderColor: isBookmarkedInSelectedCategory ? colors.rim : colors.warm500
               }}
@@ -194,7 +194,7 @@ export default function ExplorerScreen() {
         <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 19 }}>Browsing source files and pinning ghost bookmarks.</Text>
       </View>
 
-      <View 
+      <View
         className="flex-row items-center gap-2 border rounded-pill px-4 py-1"
         style={{ backgroundColor: colors.glass04, borderColor: colors.rim }}
       >
@@ -269,7 +269,7 @@ export default function ExplorerScreen() {
       />
 
       {loading ? <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 8, textAlign: 'center' }}>Scanning storage...</Text> : null}
-      
+
       {error && !loading ? (
         <View className="flex-1 items-center justify-center p-6">
           <MaterialIcons name="folder-shared" size={64} color={colors.warm300} style={{ opacity: 0.5 }} />
@@ -291,12 +291,12 @@ export default function ExplorerScreen() {
 
       {selectedUris.size > 0 && (
         <View className="absolute bottom-4 left-4 right-4 items-center">
-          <GlassCard 
-            style={{ 
-              flexDirection: 'row', 
-              alignItems: 'center', 
-              gap: 16, 
-              paddingVertical: 12, 
+          <GlassCard
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 16,
+              paddingVertical: 12,
               paddingHorizontal: 20,
               borderColor: colors.warm500,
               borderWidth: 1,
@@ -309,7 +309,7 @@ export default function ExplorerScreen() {
             }}
           >
             <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: '800' }}>{selectedUris.size} selected</Text>
-            
+
             <View className="flex-row gap-2">
               <Pressable
                 className="px-3 py-2 rounded-pill border"
@@ -326,7 +326,7 @@ export default function ExplorerScreen() {
                     Alert.alert('Select a category', 'Choose a category to bookmark into.');
                     return;
                   }
-                  
+
                   try {
                     const filesToBookmark = explorerFiles.filter(f => selectedUris.has(f.uri));
                     for (const file of filesToBookmark) {

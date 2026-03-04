@@ -17,7 +17,7 @@ import { GlassCard } from '@/src/components/GlassCard';
 import { useAppStore } from '@/src/stores/useAppStore';
 import { useFileStore } from '@/src/stores/useFileStore';
 import { useVaultStore } from '@/src/stores/useVaultStore';
-import { darkColors, lightColors } from '@/src/theme/tokens';
+import { THEME_DARK, THEME_LIGHT } from '../../src/theme/tokens';
 
 const CATEGORY_ICONS: Record<string, string> = {
   'cat-img': 'image',
@@ -40,7 +40,7 @@ function formatBytes(bytes: number): string {
 export default function HomeScreen() {
   const router = useRouter();
   const theme = useAppStore((state) => state.theme);
-  const colors = theme === 'dark' ? darkColors : lightColors;
+  const colors = theme === 'dark' ? THEME_DARK : THEME_LIGHT;
 
   const initialized = useFileStore((state) => state.initialized);
   const categories = useFileStore((state) => state.categories);

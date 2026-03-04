@@ -6,7 +6,7 @@ import { GlassCard } from '@/src/components/GlassCard';
 import { getAnalyticsSummary, type AnalyticsSummary } from '@/src/services/analytics.service';
 import { useFileStore } from '@/src/stores/useFileStore';
 import { useAppStore } from '@/src/stores/useAppStore';
-import { darkColors, lightColors } from '@/src/theme/tokens';
+import { THEME_DARK, THEME_LIGHT } from '../../src/theme/tokens';
 
 function formatBytes(bytes: number): string {
   const mb = bytes / (1024 * 1024);
@@ -18,7 +18,7 @@ function formatBytes(bytes: number): string {
 
 export default function AnalyticsScreen() {
   const theme = useAppStore((state) => state.theme);
-  const colors = theme === 'dark' ? darkColors : lightColors;
+  const colors = theme === 'dark' ? THEME_DARK : THEME_LIGHT;
 
   const initialized = useFileStore((state) => state.initialized);
   const initialize = useFileStore((state) => state.initialize);

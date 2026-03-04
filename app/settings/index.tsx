@@ -12,7 +12,7 @@ import { useAppStore } from '@/src/stores/useAppStore';
 import { useAuthStore } from '@/src/stores/useAuthStore';
 import { useFileStore } from '@/src/stores/useFileStore';
 import { useVaultStore } from '@/src/stores/useVaultStore';
-import { darkColors, lightColors } from '@/src/theme/tokens';
+import { THEME_DARK, THEME_LIGHT } from '../../src/theme/tokens';
 
 const CHANGELOG = [
   {
@@ -45,7 +45,7 @@ const CHANGELOG = [
 export default function SettingsScreen() {
   const theme = useAppStore((state) => state.theme);
   const setTheme = useAppStore((state) => state.setTheme);
-  const colors = theme === 'dark' ? darkColors : lightColors;
+  const colors = theme === 'dark' ? THEME_DARK : THEME_LIGHT;
 
   const loading = useFileStore((state) => state.loading);
   const resetAllData = useFileStore((state) => state.resetAllData);
@@ -103,12 +103,12 @@ export default function SettingsScreen() {
     // Standardizing on 6-digit PIN as per user request
     Alert.alert('Set Master PIN', 'Security requires a 6-digit access code for Vinyas.', [
       { text: 'Cancel', style: 'cancel' },
-      { 
-        text: 'Proceed to Lock Screen', 
+      {
+        text: 'Proceed to Lock Screen',
         onPress: () => {
           logout(); // Force them back to the login screen where the setup logic lives
           router.replace('/login');
-        } 
+        }
       },
     ]);
   };
@@ -126,10 +126,10 @@ export default function SettingsScreen() {
         <GlassCard>
           <View className="flex-row justify-between items-center mb-xs">
             <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: '700' }}>Theme mode</Text>
-            <MaterialIcons 
-              name={theme === 'dark' ? "dark-mode" : "light-mode"} 
-              size={20} 
-              color={colors.tealGlow} 
+            <MaterialIcons
+              name={theme === 'dark' ? "dark-mode" : "light-mode"}
+              size={20}
+              color={colors.tealGlow}
             />
           </View>
           <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 16 }}>

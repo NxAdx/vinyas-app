@@ -1,4 +1,4 @@
-export const darkColors = {
+export const THEME_DARK = {
   void: '#000000',
   void01: '#000000',
   void02: '#000000',
@@ -20,7 +20,7 @@ export const darkColors = {
   textTertiary: 'rgba(255,255,255,0.40)',
 };
 
-export const lightColors = {
+export const THEME_LIGHT = {
   void: '#F7F8FA',
   void01: '#FFFFFF',
   void02: '#FFFFFF',
@@ -43,7 +43,7 @@ export const lightColors = {
 };
 
 // Default export for backward compatibility
-export const colors = darkColors;
+export const colors = THEME_DARK;
 
 export const spacing = {
   xs: 4,

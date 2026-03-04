@@ -4,7 +4,7 @@ import type { ComponentProps } from 'react';
 import { useEffect } from 'react';
 
 import { useAppStore } from '@/src/stores/useAppStore';
-import { darkColors, lightColors } from '@/src/theme/tokens';
+import { THEME_DARK, THEME_LIGHT } from '../../src/theme/tokens';
 
 function TabIcon({
   color,
@@ -22,7 +22,7 @@ export default function TabLayout() {
   const setActiveTab = useAppStore((state) => state.setActiveTab);
   const globalMode = useAppStore((state) => state.globalMode);
   const theme = useAppStore((state) => state.theme);
-  const colors = theme === 'dark' ? darkColors : lightColors;
+  const colors = theme === 'dark' ? THEME_DARK : THEME_LIGHT;
   const segments = useSegments();
 
   const activeTint = globalMode === 'kosh' ? colors.tealGlow : colors.warm500;

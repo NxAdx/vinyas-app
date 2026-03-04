@@ -8,14 +8,14 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { AppScreen } from '@/src/components/AppScreen';
 import { useAuthStore } from '@/src/stores/useAuthStore';
 import { useAppStore } from '@/src/stores/useAppStore';
-import { darkColors, lightColors } from '@/src/theme/tokens';
+import { THEME_DARK, THEME_LIGHT } from '../src/theme/tokens';
 
 const { width } = Dimensions.get('window');
 
 export default function LoginScreen() {
     const router = useRouter();
     const theme = useAppStore((state) => state.theme);
-    const colors = theme === 'dark' ? darkColors : lightColors;
+    const colors = theme === 'dark' ? THEME_DARK : THEME_LIGHT;
 
     const initialize = useAuthStore((state) => state.initialize);
     const isAuthenticated = useAuthStore((state) => state.isAuthenticated);

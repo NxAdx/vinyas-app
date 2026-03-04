@@ -3,11 +3,11 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { AppScreen } from '@/src/components/AppScreen';
 import { useAppStore } from '@/src/stores/useAppStore';
-import { darkColors, lightColors } from '@/src/theme/tokens';
+import { THEME_DARK, THEME_LIGHT } from '../src/theme/tokens';
 
 export default function NotFoundScreen() {
   const theme = useAppStore(state => state.theme);
-  const colors = theme === 'dark' ? darkColors : lightColors;
+  const colors = theme === 'dark' ? THEME_DARK : THEME_LIGHT;
 
   return (
     <AppScreen style={{ backgroundColor: colors.void }}>
