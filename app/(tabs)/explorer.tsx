@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useLocalSearchParams } from 'expo-router';
 import {
   Alert,
   FlatList,
@@ -37,7 +38,14 @@ export default function ExplorerScreen() {
   const removeGhostLinkByUri = useFileStore((state) => state.removeGhostLinkByUri);
   const error = useFileStore((state) => state.error);
 
-  const [query, setQuery] = useState('');
+  const { q } = useLocalSearchParams<{ q?: string }>();
+  const [query, setQuery] = useState(q ?? '');
+
+  useEffect(() => {
+    if (typeof q === 'string') {
+      setQuery(q);
+    }
+  }, [q]);
 
   useEffect(() => {
     void (async () => {

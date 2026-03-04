@@ -38,8 +38,7 @@ export default function HomeScreen() {
   const globalMode = useAppStore((state) => state.globalMode);
   const setGlobalMode = useAppStore((state) => state.setGlobalMode);
 
-  const [categoryQuery, setCategoryQuery] = useState('');
-  const [newCategoryName, setNewCategoryName] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     void (async () => {
@@ -59,15 +58,12 @@ export default function HomeScreen() {
     }
   }, [globalMode, setGlobalMode, unlockedVault]);
 
-  const filteredCategories = useMemo(() => {
-    const query = categoryQuery.trim().toLowerCase();
-    return categories
-      .filter((category) => category.name.toLowerCase().includes(query))
-      .map((category) => ({
-        ...category,
-        count: ghostLinks.filter((link) => link.categoryId === category.id).length,
-      }));
-  }, [categories, categoryQuery, ghostLinks]);
+  const categoriesWithCount = useMemo(() => {
+    return categories.map((category) => ({
+      ...category,
+      count: ghostLinks.filter((link) => link.categoryId === category.id).length,
+    }));
+  }, [categories, ghostLinks]);
 
   const recentLinks = useMemo(() => {
     return [...ghostLinks].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 5);
@@ -79,19 +75,6 @@ export default function HomeScreen() {
     return `${mb.toFixed(1)} MB`;
   }, [ghostLinks]);
 
-  const handleCreateCategory = async () => {
-    if (!newCategoryName.trim()) {
-      return;
-    }
-
-    try {
-      await createNewCategory(newCategoryName);
-      setNewCategoryName('');
-    } catch (createError) {
-      const message = createError instanceof Error ? createError.message : 'Failed to create category.';
-      Alert.alert('Create category failed', message);
-    }
-  };
 
   const handleOpenVaultGesture = async () => {
     await Haptics.selectionAsync();
@@ -107,12 +90,12 @@ export default function HomeScreen() {
             <Text style={styles.logoSub}>Private Explorer</Text>
           </Pressable>
 
-          <Pressable onPress={() => router.push('/settings/index' as never)} style={styles.settingsButton}>
+          <Pressable onPress={() => router.push('/settings')} style={styles.settingsButton}>
             <MaterialIcons name="settings" size={20} color={colors.textPrimary} />
           </Pressable>
         </View>
 
-        <Text style={styles.heroTitle}>Bento Dashboard</Text>
+        <Text style={styles.heroTitle}>Dashboard</Text>
         <Text style={styles.heroSubtitle}>
           Long-press logo for hidden Kosh entry. Current mode: {globalMode.toUpperCase()}
         </Text>
@@ -137,18 +120,24 @@ export default function HomeScreen() {
         </ScrollView>
 
         <GlassCard>
-          <Text style={styles.sectionTitle}>Find categories</Text>
+          <Text style={styles.sectionTitle}>Search files</Text>
           <TextInput
-            value={categoryQuery}
-            onChangeText={setCategoryQuery}
-            placeholder="Search categories"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            onSubmitEditing={() => {
+              if (searchQuery.trim()) {
+                router.push({ pathname: '/explorer' as never, params: { q: searchQuery.trim() } });
+              }
+            }}
+            placeholder="Search by file name or type"
             placeholderTextColor={colors.textTertiary}
             style={styles.input}
+            returnKeyType="search"
           />
         </GlassCard>
 
         <View style={styles.categoryGrid}>
-          {filteredCategories.map((category) => (
+          {categoriesWithCount.map((category) => (
             <Pressable
               key={category.id}
               onPress={() =>
@@ -159,27 +148,21 @@ export default function HomeScreen() {
               }
               style={[styles.categoryCard, { borderColor: category.gradient[0] }]}
             >
-              <Text style={styles.categoryTitle}>{category.name}</Text>
-              <Text style={styles.categoryCount}>{category.count} bookmarks</Text>
+              <MaterialIcons
+                name={category.icon as any}
+                size={28}
+                color={category.gradient[0]}
+                style={{ marginBottom: 4 }}
+              />
+              <View>
+                <Text style={styles.categoryTitle}>{category.name}</Text>
+                <Text style={styles.categoryCount}>{category.count} bookmarks</Text>
+              </View>
             </Pressable>
           ))}
         </View>
 
-        <GlassCard>
-          <Text style={styles.sectionTitle}>Create category</Text>
-          <View style={styles.inlineRow}>
-            <TextInput
-              value={newCategoryName}
-              onChangeText={setNewCategoryName}
-              placeholder="Category name"
-              placeholderTextColor={colors.textTertiary}
-              style={[styles.input, styles.inlineInput]}
-            />
-            <Pressable style={styles.primaryButton} onPress={handleCreateCategory}>
-              <Text style={styles.primaryButtonText}>Add</Text>
-            </Pressable>
-          </View>
-        </GlassCard>
+
 
         <GlassCard>
           <Text style={styles.sectionTitle}>Recent activity</Text>
