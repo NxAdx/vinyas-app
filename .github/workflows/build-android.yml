@@ -20,25 +20,34 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
+          cache-dependency-path: vinyas-app/package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          cd vinyas-app
+          npm ci
 
       - name: Setup Java (for Gradle)
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
+          cache: 'gradle'
 
       - name: Build Android via Expo Prebuild & Gradle
         run: |
-          npx expo prebuild --platform android --clean
+          cd vinyas-app
+          # Remove --clean to avoid wiping native folder if it exists in cache (though currently not cached)
+          # --no-install skips the redundant npm install inside prebuild
+          npx expo prebuild --platform android --no-install
           cd android
-          ./gradlew assembleRelease
+          # --no-daemon is safer for CI; --max-workers helps parallelize but GitHub runners are limited
+          ./gradlew assembleRelease --no-daemon
 
-      - name: Upload Android APK
+      - name: Upload Android APKs
         uses: actions/upload-artifact@v4
         with:
-          name: Vinyas-Android-APK
-          path: ./android/app/build/outputs/apk/release/app-release.apk
+          name: Vinyas-Android-APKs
+          path: vinyas-app/android/app/build/outputs/apk/release/*.apk
           retention-days: 7
