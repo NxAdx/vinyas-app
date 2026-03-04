@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { usePreventScreenCapture } from 'expo-screen-capture';
+import * as ScreenCapture from 'expo-screen-capture';
+import { useIsFocused } from '@react-navigation/native';
 import {
   Alert,
   Pressable,
@@ -18,8 +20,19 @@ import { useVaultStore } from '@/src/stores/useVaultStore';
 import { colors, radius, spacing } from '@/src/theme/tokens';
 
 export default function VaultScreen() {
-  usePreventScreenCapture();
-  
+  const isFocused = useIsFocused();
+
+  useEffect(() => {
+    if (isFocused) {
+      ScreenCapture.preventScreenCaptureAsync();
+    } else {
+      ScreenCapture.allowScreenCaptureAsync();
+    }
+    return () => {
+      ScreenCapture.allowScreenCaptureAsync();
+    };
+  }, [isFocused]);
+
   const initialized = useFileStore((state) => state.initialized);
   const ghostLinks = useFileStore((state) => state.ghostLinks);
   const initialize = useFileStore((state) => state.initialize);
