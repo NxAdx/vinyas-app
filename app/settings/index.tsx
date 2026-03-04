@@ -1,12 +1,13 @@
 import Constants from 'expo-constants';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import * as Updates from 'expo-updates';
+import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { AppScreen } from '@/src/components/AppScreen';
 import { GlassCard } from '@/src/components/GlassCard';
 import { useAppStore } from '@/src/stores/useAppStore';
 import { useFileStore } from '@/src/stores/useFileStore';
 import { useVaultStore } from '@/src/stores/useVaultStore';
-import { colors, radius, spacing } from '@/src/theme/tokens';
+import { colors } from '@/src/theme/tokens';
 
 export default function SettingsScreen() {
   const globalMode = useAppStore((state) => state.globalMode);
@@ -23,40 +24,87 @@ export default function SettingsScreen() {
 
   const appVersion = Constants.expoConfig?.version ?? '0.1.0';
 
+  const checkForUpdate = async () => {
+    try {
+      const update = await Updates.checkForUpdateAsync();
+      if (update.isAvailable) {
+        Alert.alert(
+          'Update Available',
+          'A new Over-The-Air update is available. Download and restart?',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Install',
+              onPress: async () => {
+                await Updates.fetchUpdateAsync();
+                await Updates.reloadAsync();
+              },
+            },
+          ]
+        );
+      } else {
+        Alert.alert('Up to date', 'Vinyas is running the latest version.');
+      }
+    } catch (e: any) {
+      Alert.alert('Update Error', e.message || 'Could not connect to update server.');
+    }
+  };
+
   return (
     <AppScreen>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Settings</Text>
-          <Text style={styles.subtitle}>Control theme mode, data refresh, and environment details.</Text>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName="gap-md pb-xxl px-2">
+        <View className="gap-1 mt-4">
+          <Text className="text-textPrimary text-2xl font-extrabold">Settings</Text>
+          <Text className="text-textSecondary text-[13px] leading-[18px]">
+            Control theme mode, data refresh, and environment details.
+          </Text>
         </View>
 
         <GlassCard>
-          <Text style={styles.sectionTitle}>Theme mode</Text>
-          <Text style={styles.sectionText}>Current mode: {globalMode.toUpperCase()}</Text>
-          <Pressable onPress={toggleGlobalMode} style={styles.primaryButton}>
-            <Text style={styles.primaryButtonText}>Toggle mode</Text>
+          <Text className="text-textPrimary text-[15px] font-bold mb-sm">Theme mode</Text>
+          <Text className="text-textSecondary text-[13px] mb-sm">
+            Current mode: {globalMode.toUpperCase()}
+          </Text>
+          <Pressable 
+            onPress={toggleGlobalMode} 
+            className="bg-textPrimary rounded-pill py-2.5 items-center active:bg-textSecondary"
+          >
+            <Text className="text-void font-bold text-[13px]">Force Toggle Theme</Text>
           </Pressable>
         </GlassCard>
 
         <GlassCard>
-          <Text style={styles.sectionTitle}>Data actions</Text>
-          <View style={styles.row}>
+          <Text className="text-textPrimary text-[15px] font-bold mb-sm">OTA Updates</Text>
+          <Text className="text-textSecondary text-[13px] mb-sm">
+            Instantly download JavaScript bundle patches without waiting for an APK compiling cycle.
+          </Text>
+          <Pressable 
+            onPress={checkForUpdate} 
+            className="border border-rim bg-glass07 rounded-pill py-2.5 items-center active:bg-glass10"
+          >
+            <Text className="text-textPrimary font-bold text-[13px]">Check for Update</Text>
+          </Pressable>
+        </GlassCard>
+
+        <GlassCard>
+          <Text className="text-textPrimary text-[15px] font-bold mb-sm">Data actions</Text>
+          <View className="flex-row gap-sm">
             <Pressable
               onPress={async () => {
                 await refreshData();
                 await refreshExplorer();
                 await hydrateVault();
               }}
-              style={styles.secondaryButton}
+              className="flex-1 rounded-pill border border-rim bg-glass07 py-2.5 items-center active:bg-glass10"
             >
-              <Text style={styles.secondaryButtonText}>Refresh all</Text>
+              <Text className="text-textPrimary text-xs font-bold">Refresh all</Text>
             </Pressable>
+            
             <Pressable
               onPress={() => {
                 Alert.alert(
                   'Reset data',
-                  'This removes all categories and bookmarks and recreates system defaults.',
+                  'This removes all categories and bookmarks from the local SQLite database. Are you sure?',
                   [
                     { text: 'Cancel', style: 'cancel' },
                     {
@@ -71,130 +119,32 @@ export default function SettingsScreen() {
                   ],
                 );
               }}
-              style={styles.dangerButton}
+              className="flex-1 rounded-pill border border-[rgba(255,71,87,0.4)] bg-[rgba(255,71,87,0.16)] py-2.5 items-center active:bg-[rgba(255,71,87,0.3)]"
             >
-              <Text style={styles.dangerButtonText}>Reset data</Text>
+              <Text className="text-[#FF9EA6] text-xs font-bold">Reset database</Text>
             </Pressable>
           </View>
         </GlassCard>
 
         <GlassCard>
-          <Text style={styles.sectionTitle}>App info</Text>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Version</Text>
-            <Text style={styles.infoValue}>{appVersion}</Text>
+          <Text className="text-textPrimary text-[15px] font-bold mb-sm">App info</Text>
+          <View className="flex-row justify-between py-2 border-b border-rim">
+            <Text className="text-textSecondary text-xs">Version</Text>
+            <Text className="text-textPrimary text-xs font-bold">{appVersion}</Text>
           </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Build</Text>
-            <Text style={styles.infoValue}>Offline local mode</Text>
+          <View className="flex-row justify-between py-2 border-b border-rim">
+            <Text className="text-textSecondary text-xs">Build</Text>
+            <Text className="text-textPrimary text-xs font-bold">SQLite OTA Ready</Text>
           </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Security</Text>
-            <Text style={styles.infoValue}>Kosh session lock enabled</Text>
+          <View className="flex-row justify-between py-2 border-b border-rim">
+            <Text className="text-textSecondary text-xs">Security</Text>
+            <Text className="text-textPrimary text-xs font-bold">Kosh session lock enabled</Text>
           </View>
         </GlassCard>
 
-        {loading ? <Text style={styles.infoText}>Processing setting action...</Text> : null}
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        {loading ? <Text className="text-textSecondary text-xs mt-1">Processing database action...</Text> : null}
+        {error ? <Text className="text-danger text-xs mt-1">{error}</Text> : null}
       </ScrollView>
     </AppScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  content: {
-    gap: spacing.md,
-    paddingBottom: spacing.xxl,
-  },
-  header: {
-    gap: 4,
-  },
-  title: {
-    color: colors.textPrimary,
-    fontSize: 24,
-    fontWeight: '800',
-  },
-  subtitle: {
-    color: colors.textSecondary,
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  sectionTitle: {
-    color: colors.textPrimary,
-    fontSize: 15,
-    fontWeight: '700',
-    marginBottom: spacing.sm,
-  },
-  sectionText: {
-    color: colors.textSecondary,
-    fontSize: 13,
-    marginBottom: spacing.sm,
-  },
-  row: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  primaryButton: {
-    backgroundColor: colors.warm500,
-    borderRadius: radius.pill,
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  primaryButtonText: {
-    color: colors.textPrimary,
-    fontWeight: '700',
-    fontSize: 13,
-  },
-  secondaryButton: {
-    flex: 1,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: colors.rim,
-    backgroundColor: colors.glass07,
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  secondaryButtonText: {
-    color: colors.textPrimary,
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  dangerButton: {
-    flex: 1,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: 'rgba(255,71,87,0.4)',
-    backgroundColor: 'rgba(255,71,87,0.16)',
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  dangerButtonText: {
-    color: '#FF9EA6',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.rim,
-  },
-  infoLabel: {
-    color: colors.textSecondary,
-    fontSize: 12,
-  },
-  infoValue: {
-    color: colors.textPrimary,
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  infoText: {
-    color: colors.textSecondary,
-    fontSize: 12,
-  },
-  errorText: {
-    color: colors.danger,
-    fontSize: 12,
-  },
-});

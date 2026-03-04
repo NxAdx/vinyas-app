@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { Category, GhostLink, ExplorerFileItem, StorageSourceType } from '../types';
+import { getDatabase, initDatabase } from '../database/db';
 
 interface FileState {
   initialized: boolean;
@@ -32,150 +33,72 @@ export const useFileStore = create<FileState>((set, get) => ({
     { type: 'sd_card', isConnected: false },
     { type: 'usb_otg', isConnected: false }
   ],
-  categories: [
-    {
-      id: 'cat-doc',
-      name: 'Documents',
-      icon: 'description',
-      gradient: ['#E07A5F', '#D16043'],
-      sortOrder: 1,
-      isSystem: true,
-      isKosh: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    },
-    {
-      id: 'cat-download',
-      name: 'Downloads',
-      icon: 'download',
-      gradient: ['#457B9D', '#1D3557'],
-      sortOrder: 2,
-      isSystem: true,
-      isKosh: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    },
-    {
-      id: 'cat-audio',
-      name: 'Audio',
-      icon: 'audiotrack',
-      gradient: ['#9C6644', '#7F5539'],
-      sortOrder: 3,
-      isSystem: true,
-      isKosh: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    },
-    {
-      id: 'cat-apps',
-      name: 'Apps',
-      icon: 'apps',
-      gradient: ['#3D5A80', '#293241'],
-      sortOrder: 4,
-      isSystem: true,
-      isKosh: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    },
-    {
-      id: 'cat-img',
-      name: 'Images',
-      icon: 'image',
-      gradient: ['#81B29A', '#6B9D84'],
-      sortOrder: 5,
-      isSystem: true,
-      isKosh: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    },
-    {
-      id: 'cat-vid',
-      name: 'Videos',
-      icon: 'movie',
-      gradient: ['#F2CC8F', '#DDB577'],
-      sortOrder: 6,
-      isSystem: true,
-      isKosh: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    },
-    {
-      id: 'cat-other',
-      name: 'Other',
-      icon: 'more-horiz',
-      gradient: ['#A8DADC', '#457B9D'],
-      sortOrder: 7,
-      isSystem: true,
-      isKosh: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    },
-    {
-      id: 'cat-kosh',
-      name: 'Kosh Vault',
-      icon: 'lock',
-      gradient: ['#1C2A33', '#0F1A20'],
-      sortOrder: 8,
-      isSystem: true,
-      isKosh: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
-  ],
-  ghostLinks: [
-    {
-      id: 'g-1',
-      categoryId: 'cat-doc',
-      fileUri: 'file://internal/docs/spec.pdf',
-      fileName: 'Project Specification.pdf',
-      fileSize: 2500000,
-      mimeType: 'application/pdf',
-      storageSource: 'internal',
-      isAvailable: true,
-      isKosh: false,
-      createdAt: new Date().toISOString()
-    }
-  ],
-  explorerFiles: [
-    {
-      id: 'e-1',
-      name: 'Android Studio Setup.mp4',
-      uri: 'file://internal/Movies/Android Studio Setup.mp4',
-      size: 154000000,
-      mimeType: 'video/mp4',
-      modifiedAt: new Date().toISOString(),
-      storageSource: 'internal'
-    },
-    {
-      id: 'e-2',
-      name: 'Invoice_April_26.pdf',
-      uri: 'file://internal/Documents/Invoice_April_26.pdf',
-      size: 450000,
-      mimeType: 'application/pdf',
-      modifiedAt: new Date().toISOString(),
-      storageSource: 'internal'
-    },
-    {
-      id: 'e-3',
-      name: 'IMG_20260301.jpg',
-      uri: 'file://sd_card/DCIM/Camera/IMG_20260301.jpg',
-      size: 4200000,
-      mimeType: 'image/jpeg',
-      modifiedAt: new Date().toISOString(),
-      storageSource: 'sd_card'
-    }
-  ],
+  categories: [],
+  ghostLinks: [],
+  explorerFiles: [],
 
   initialize: async () => {
     set({ loading: true, error: null });
-    await new Promise(res => setTimeout(res, 500));
-    set({ initialized: true, loading: false });
+    try {
+      await initDatabase();
+      const db = getDatabase();
+      
+      const cats = await db.getAllAsync<Category>('SELECT * FROM categories ORDER BY sort_order ASC');
+      const links = await db.getAllAsync<GhostLink>('SELECT * FROM ghost_links ORDER BY created_at DESC');
+
+      const mappedCats = cats.map((c: any) => ({
+        ...c,
+        id: c.id,
+        name: c.name,
+        icon: c.icon,
+        gradient: JSON.parse(c.gradient || '[]'),
+        sortOrder: c.sort_order,
+        isSystem: Boolean(c.is_system),
+        isKosh: Boolean(c.is_kosh)
+      }));
+
+      const mappedLinks = links.map((l: any) => ({
+        ...l,
+        categoryId: l.category_id,
+        fileUri: l.file_uri,
+        fileName: l.file_name,
+        fileSize: l.file_size,
+        mimeType: l.mime_type,
+        storageSource: l.storage_source,
+        isAvailable: Boolean(l.is_available),
+        isKosh: Boolean(l.is_kosh),
+        createdAt: l.created_at
+      }));
+
+      set({ categories: mappedCats, ghostLinks: mappedLinks, initialized: true, loading: false });
+    } catch (e) {
+      set({ error: (e as Error).message, loading: false });
+    }
   },
 
   refreshData: async () => {
     set({ loading: true, error: null });
-    await new Promise(res => setTimeout(res, 300));
-    set({ loading: false });
+    try {
+      const db = getDatabase();
+      const links = await db.getAllAsync<GhostLink>('SELECT * FROM ghost_links ORDER BY created_at DESC');
+      
+      const mappedLinks = links.map((l: any) => ({
+        ...l,
+        categoryId: l.category_id,
+        fileUri: l.file_uri,
+        fileName: l.file_name,
+        fileSize: l.file_size,
+        mimeType: l.mime_type,
+        storageSource: l.storage_source,
+        isAvailable: Boolean(l.is_available),
+        isKosh: Boolean(l.is_kosh),
+        createdAt: l.created_at
+      }));
+
+      set({ ghostLinks: mappedLinks, loading: false });
+    } catch (e) {
+      set({ error: (e as Error).message, loading: false });
+    }
   },
 
   refreshExplorer: async (query?: string) => {
@@ -193,68 +116,113 @@ export const useFileStore = create<FileState>((set, get) => ({
 
   createNewCategory: async (name: string) => {
     if (!name) throw new Error('Name cannot be empty');
+    const newId = `cat-${Date.now()}`;
+    const now = new Date().toISOString();
     
-    const newCat: Category = {
-      id: `cat-${Date.now()}`,
-      name,
-      icon: 'folder',
-      gradient: ['#E07A5F', '#D16043'],
-      sortOrder: Date.now(),
-      isSystem: false,
-      isKosh: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+    // We mock system gradient generation for custom tags for now
+    const gradient = JSON.stringify(['#E07A5F', '#D16043']);
+    
+    try {
+      const db = getDatabase();
+      await db.runAsync(
+        `INSERT INTO categories (id, name, icon, gradient, sort_order, is_system, is_kosh, created_at, updated_at) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [newId, name, 'folder', gradient, Date.now(), 0, 0, now, now]
+      );
+      
+      const newCat: Category = {
+        id: newId,
+        name,
+        icon: 'folder',
+        gradient: ['#E07A5F', '#D16043'],
+        sortOrder: Date.now(),
+        isSystem: false,
+        isKosh: false,
+        createdAt: now,
+        updatedAt: now
+      };
 
-    set(state => ({ categories: [...state.categories, newCat] }));
+      set(state => ({ categories: [...state.categories, newCat] }));
+    } catch (e) {
+      set({ error: (e as Error).message });
+    }
   },
 
   bookmarkFile: async (item: ExplorerFileItem, categoryId: string) => {
     set({ loading: true });
-    await new Promise(res => setTimeout(res, 300));
+    const newId = `gl-${Date.now()}`;
+    const now = new Date().toISOString();
     
-    const newLink: GhostLink = {
-      id: `gl-${Date.now()}`,
-      categoryId,
-      fileUri: item.uri,
-      fileName: item.name,
-      fileSize: item.size,
-      mimeType: item.mimeType,
-      storageSource: item.storageSource,
-      isAvailable: true,
-      isKosh: false,
-      createdAt: new Date().toISOString()
-    };
-    
-    set(state => ({ ghostLinks: [...state.ghostLinks, newLink], loading: false }));
+    try {
+      const db = getDatabase();
+      await db.runAsync(
+        `INSERT INTO ghost_links (id, category_id, file_uri, file_name, file_size, mime_type, storage_source, is_available, is_kosh, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [newId, categoryId, item.uri, item.name, item.size, item.mimeType, item.storageSource, 1, 0, now]
+      );
+
+      const newLink: GhostLink = {
+        id: newId,
+        categoryId,
+        fileUri: item.uri,
+        fileName: item.name,
+        fileSize: item.size,
+        mimeType: item.mimeType,
+        storageSource: item.storageSource,
+        isAvailable: true,
+        isKosh: false,
+        createdAt: now
+      };
+      
+      set(state => ({ ghostLinks: [newLink, ...state.ghostLinks], loading: false }));
+    } catch (e) {
+      set({ error: (e as Error).message, loading: false });
+    }
   },
 
   removeGhostLinkByUri: async (uri: string, categoryId: string) => {
     set({ loading: true });
-    await new Promise(res => setTimeout(res, 300));
-    set(state => ({
-      ghostLinks: state.ghostLinks.filter(l => !(l.fileUri === uri && l.categoryId === categoryId)),
-      loading: false
-    }));
+    try {
+      const db = getDatabase();
+      await db.runAsync('DELETE FROM ghost_links WHERE file_uri = ? AND category_id = ?', [uri, categoryId]);
+      set(state => ({
+        ghostLinks: state.ghostLinks.filter(l => !(l.fileUri === uri && l.categoryId === categoryId)),
+        loading: false
+      }));
+    } catch (e) {
+      set({ error: (e as Error).message, loading: false });
+    }
   },
 
   removeGhostLink: async (id: string) => {
     set({ loading: true });
-    await new Promise(res => setTimeout(res, 300));
-    set(state => ({
-      ghostLinks: state.ghostLinks.filter(l => l.id !== id),
-      loading: false
-    }));
+    try {
+      const db = getDatabase();
+      await db.runAsync('DELETE FROM ghost_links WHERE id = ?', [id]);
+      set(state => ({
+        ghostLinks: state.ghostLinks.filter(l => l.id !== id),
+        loading: false
+      }));
+    } catch (e) {
+      set({ error: (e as Error).message, loading: false });
+    }
   },
 
   resetAllData: async () => {
     set({ loading: true });
-    await new Promise(res => setTimeout(res, 500));
-    set({
-      ghostLinks: [],
-      explorerFiles: [],
-      selectedCategoryId: null,
-      loading: false,
-    });
+    try {
+      const db = getDatabase();
+      await db.runAsync('DELETE FROM ghost_links');
+      await db.runAsync('DELETE FROM categories WHERE is_system = 0');
+      
+      set({
+        ghostLinks: [],
+        selectedCategoryId: null,
+        loading: false,
+      });
+      get().initialize(); // Reload the base categories from the reset DB
+    } catch (e) {
+      set({ error: (e as Error).message, loading: false });
+    }
   }
 }));

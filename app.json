@@ -38,6 +38,7 @@
     },
     "plugins": [
       "expo-router",
+      "./withAndroidAbiSplits.js",
       [
         "expo-splash-screen",
         {
@@ -58,6 +59,10 @@
         }
       ]
     ],
+    "updates": {
+      "url": "https://u.expo.dev/YOUR-PROJECT-ID",
+      "fallbackToCacheTimeout": 0
+    },
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
