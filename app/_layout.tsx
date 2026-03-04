@@ -26,47 +26,46 @@ export default function RootLayout() {
 
   const [isReady, setIsReady] = useState(false);
 
-  // Fire auth initialization ASAP, but don't block the render tree
+  // Fire auth initialization ASAP
   useEffect(() => {
-    let isMounted = true;
-    const task = InteractionManager.runAfterInteractions(async () => {
+    const init = async () => {
+      console.log('[Vinyas] Initializing Auth Store...');
       await initialize();
-      if (isMounted) {
-        setIsReady(true);
-      }
-    });
-    return () => {
-      isMounted = false;
-      task.cancel();
+      console.log('[Vinyas] Auth Store Ready.');
+      setIsReady(true);
     };
+    init();
   }, [initialize]);
 
   // Auth-based navigation guard
   useEffect(() => {
     if (!isReady || hasPin === null) return;
 
-    // Sequence is CRITICAL to prevent Android crash: 
-    // hide splash -> wait a tick -> navigation
+    console.log('[Vinyas] Nav Sequence:', { isReady, isAuthenticated, hasPin, segments });
+
     const navigateSafely = async () => {
       try {
         await SplashScreen.hideAsync();
+        console.log('[Vinyas] Splash Hidden.');
       } catch (e) {
-        // Splash might already be hidden
+        // Already hidden
       }
 
-      // Small delay prevents navigation while React Native tree is locking during layout
-      setTimeout(() => {
-        const inProtected = segments[0] === '(tabs)' || segments[0] === 'settings' || segments[0] === 'category';
+      const inProtected = segments[0] === '(tabs)' || segments[0] === 'settings' || segments[0] === 'category';
 
-        if (!isAuthenticated && hasPin && inProtected) {
-          router.replace('/login');
-        } else if (isAuthenticated && segments[0] === 'login') {
-          router.replace('/(tabs)');
-        } else if (!hasPin && !hasRedirected.current) {
-          hasRedirected.current = true;
-          router.replace('/(tabs)');
-        }
-      }, 50);
+      if (!isAuthenticated && hasPin && inProtected) {
+        console.log('[Vinyas] Redirecting to Login');
+        router.replace('/login');
+      } else if (isAuthenticated && segments[0] === 'login') {
+        console.log('[Vinyas] Redirecting to Tabs (Authenticated)');
+        router.replace('/(tabs)');
+      } else if (!hasPin && !hasRedirected.current && segments[0] !== '(tabs)') {
+        console.log('[Vinyas] Redirecting to Tabs (No PIN Setup)');
+        hasRedirected.current = true;
+        router.replace('/(tabs)');
+      } else {
+        console.log('[Vinyas] No redirect needed.');
+      }
     };
 
     void navigateSafely();

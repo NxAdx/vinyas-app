@@ -83,24 +83,28 @@ export default function HomeScreen() {
 
   useEffect(() => {
     let isMounted = true;
-    const task = InteractionManager.runAfterInteractions(async () => {
+    const init = async () => {
+      console.log('[Vinyas] HomeScreen: Starting DB/Vault Init...');
       try {
         if (!initialized) {
+          console.log('[Vinyas] HomeScreen: Initializing FileStore...');
           await initialize();
         }
+        console.log('[Vinyas] HomeScreen: Hydrating VaultStore...');
         await hydrateVault();
+        console.log('[Vinyas] HomeScreen: Initialization Complete.');
       } catch (err) {
-        console.warn('Home screen DB init failed safely:', err);
+        console.warn('[Vinyas] Home screen DB init failed safely:', err);
       } finally {
         if (isMounted) {
           setHasLoadedApp(true);
         }
       }
-    });
+    };
+    init();
 
     return () => {
       isMounted = false;
-      task.cancel();
     };
   }, [hydrateVault, initialize, initialized, setHasLoadedApp]);
 
