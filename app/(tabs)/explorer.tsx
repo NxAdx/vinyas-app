@@ -180,48 +180,23 @@ export default function ExplorerScreen() {
         <Text className="text-textSecondary text-[13px] leading-[19px]">Browsing source files and pinning ghost bookmarks.</Text>
       </View>
 
-      <GlassCard>
-        <Text className="text-textPrimary text-[15px] font-bold mb-sm">Search files</Text>
+      <View className="flex-row items-center gap-2 bg-glass04 border border-rim rounded-chip px-4 py-1">
+        <MaterialIcons name="search" size={20} color={colors.textTertiary} />
         <TextInput
           value={query}
           onChangeText={setQuery}
-          placeholder="Search by file name or type"
+          placeholder="Search by file name or type..."
           placeholderTextColor={colors.textTertiary}
-          className="border border-rim rounded-chip text-textPrimary bg-glass04 px-3 py-2.5 text-sm"
+          className="flex-1 text-textPrimary py-3 text-[15px]"
         />
-      </GlassCard>
-
-      <View className="mt-md flex-row items-center gap-2">
-        <Text className="text-textTertiary text-xs uppercase">Category:</Text>
-        <Text className="text-warm300 text-xs font-bold">{selectedCategoryName}</Text>
+        {query.length > 0 && (
+          <Pressable onPress={() => setQuery('')} className="p-2 -mr-2">
+            <MaterialIcons name="close" size={20} color={colors.textSecondary} />
+          </Pressable>
+        )}
       </View>
 
-      <FlatList
-        data={categories}
-        keyExtractor={(item) => item.id}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerClassName="gap-sm py-sm"
-        renderItem={({ item }) => {
-          const selected = item.id === selectedCategoryId;
-          return (
-            <Pressable
-              onPress={() => setSelectedCategoryId(item.id)}
-              className={`border rounded-pill px-[14px] py-2 ${
-                selected 
-                  ? 'bg-[#D97B3C]/16 border-[#D97B3C]/40' 
-                  : 'border-rim bg-glass04'
-              }`}
-            >
-              <Text className={`text-xs font-semibold ${
-                selected ? 'text-warm300' : 'text-textSecondary'
-              }`}>
-                {item.name}
-              </Text>
-            </Pressable>
-          );
-        }}
-      />
+
 
       <SectionList
         sections={sections as any}
@@ -268,8 +243,25 @@ export default function ExplorerScreen() {
         }
       />
 
-      {loading ? <Text className="text-textSecondary text-xs mt-sm">Updating explorer...</Text> : null}
-      {error ? <Text className="text-danger text-xs mt-sm">{error}</Text> : null}
+      {loading ? <Text className="text-textSecondary text-xs mt-sm text-center">Scanning storage...</Text> : null}
+      
+      {error && !loading ? (
+        <View className="flex-1 items-center justify-center mt-xl px-md">
+          <MaterialIcons name="folder-shared" size={64} color={colors.warm300} style={{ opacity: 0.5 }} />
+          <Text className="text-textPrimary text-[18px] font-bold mt-md mb-xs text-center">Storage Access Required</Text>
+          <Text className="text-textSecondary text-[14px] text-center mb-lg leading-[20px]">
+            Vinyas needs permission to read a folder to find files. This is usually your Internal Storage or SD Card.
+          </Text>
+          <Pressable
+            onPress={async () => {
+              await refreshExplorer(query);
+            }}
+            className="bg-warm500 rounded-pill px-6 py-3 items-center active:bg-warm300"
+          >
+            <Text className="text-void text-sm font-bold">Grant Access</Text>
+          </Pressable>
+        </View>
+      ) : null}
 
       {selectedUris.size > 0 && (
         <View className="absolute bottom-4 left-4 right-4 items-center">

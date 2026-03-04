@@ -63,39 +63,40 @@ export default function SettingsScreen() {
 
   const checkForUpdate = async () => {
     try {
-      const update = await Updates.checkForUpdateAsync();
-      if (update.isAvailable) {
-        Alert.alert(
-          'Update Available',
-          'A new Over-The-Air update is available. Download and restart?',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            {
-              text: 'Install',
-              onPress: async () => {
-                await Updates.fetchUpdateAsync();
-                await Updates.reloadAsync();
+      if (!Updates.isEmergencyLaunch && Constants.expoConfig?.updates?.url) {
+        const update = await Updates.checkForUpdateAsync();
+        if (update.isAvailable) {
+          Alert.alert(
+            'Update Available',
+            'A new Over-The-Air update is available. Download and restart?',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              {
+                text: 'Install',
+                onPress: async () => {
+                  await Updates.fetchUpdateAsync();
+                  await Updates.reloadAsync();
+                },
               },
-            },
-          ]
-        );
+            ]
+          );
+        } else {
+          Alert.alert('Up to date', 'Vinyas is running the latest version.');
+        }
       } else {
-        Alert.alert('Up to date', 'Vinyas is running the latest version.');
+        Alert.alert('OTA Disabled', 'Over-The-Air updates are not fully configured for this build.');
       }
     } catch (e: any) {
-      Alert.alert('Update Error', e.message || 'Could not connect to update server.');
+      Alert.alert('Update Error', 'Could not connect to update server. Check your connection.');
     }
   };
 
   return (
     <AppScreen>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName="gap-md pb-xxl px-2">
-        <View className="gap-1 mt-4">
-          <Text className="text-textPrimary text-2xl font-extrabold">Settings</Text>
-          <Text className="text-textSecondary text-[13px] leading-[18px]">
-            Theme, security, data, and update controls.
-          </Text>
-        </View>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName="gap-md pb-xxl px-2 pt-2">
+        <Text className="text-textSecondary text-[13px] leading-[18px]">
+          Control theme mode, security, and environment details.
+        </Text>
 
         {/* Theme */}
         <GlassCard>
@@ -104,7 +105,17 @@ export default function SettingsScreen() {
             Current mode: {globalMode.toUpperCase()}
           </Text>
           <Pressable
-            onPress={toggleGlobalMode}
+            onPress={async () => {
+              toggleGlobalMode();
+              Alert.alert('Theme Changed', 'Restarting app to apply theme colors globally.', [
+                {
+                  text: 'Restart Now',
+                  onPress: async () => {
+                    await Updates.reloadAsync();
+                  }
+                }
+              ]);
+            }}
             className="bg-textPrimary rounded-pill py-2.5 items-center active:bg-textSecondary"
           >
             <Text className="text-void font-bold text-[13px]">Force Toggle Theme</Text>
@@ -164,46 +175,7 @@ export default function SettingsScreen() {
           </Pressable>
         </GlassCard>
 
-        {/* Data Actions */}
-        <GlassCard>
-          <Text className="text-textPrimary text-[15px] font-bold mb-sm">Data actions</Text>
-          <View className="flex-row gap-sm">
-            <Pressable
-              onPress={async () => {
-                await refreshData();
-                await refreshExplorer();
-                await hydrateVault();
-              }}
-              className="flex-1 rounded-pill border border-rim bg-glass07 py-2.5 items-center active:bg-glass10"
-            >
-              <Text className="text-textPrimary text-xs font-bold">Refresh all</Text>
-            </Pressable>
-
-            <Pressable
-              onPress={() => {
-                Alert.alert(
-                  'Reset data',
-                  'This removes all categories and bookmarks from the local SQLite database. Are you sure?',
-                  [
-                    { text: 'Cancel', style: 'cancel' },
-                    {
-                      text: 'Reset',
-                      style: 'destructive',
-                      onPress: async () => {
-                        await resetAllData();
-                        lockVault();
-                        await hydrateVault();
-                      },
-                    },
-                  ],
-                );
-              }}
-              className="flex-1 rounded-pill border border-[rgba(255,71,87,0.4)] bg-[rgba(255,71,87,0.16)] py-2.5 items-center active:bg-[rgba(255,71,87,0.3)]"
-            >
-              <Text className="text-[#FF9EA6] text-xs font-bold">Reset database</Text>
-            </Pressable>
-          </View>
-        </GlassCard>
+        {/* Data Actions (Hidden for Production) */}
 
         {/* App Info */}
         <GlassCard>

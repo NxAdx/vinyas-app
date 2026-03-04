@@ -124,12 +124,12 @@ export default function VaultScreen() {
     <AppScreen>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName="gap-md pb-xxl">
         <View className="gap-1">
-          <Text className="text-tealGlow text-[26px] font-extrabold">Kosh Vault</Text>
-          <Text className="text-textSecondary text-[13px] leading-[19px]">Secure area for private ghost bookmarks. Theme shifts to teal.</Text>
+          <Text className="text-textPrimary text-[26px] font-extrabold">Kosh Vault</Text>
+          <Text className="text-textSecondary text-[13px] leading-[19px]">Secure area for private ghost bookmarks.</Text>
         </View>
 
         {!configured ? (
-          <GlassCard className="border-[rgba(0,229,204,0.35)] bg-[rgba(29,43,83,0.26)]">
+          <GlassCard>
             <Text className="text-textPrimary text-[15px] font-bold mb-sm">Setup vault</Text>
             <TextInput
               value={setupPasscode}
@@ -137,7 +137,7 @@ export default function VaultScreen() {
               placeholder="Create passcode"
               secureTextEntry
               placeholderTextColor={colors.textTertiary}
-              className="border border-[rgba(0,229,204,0.25)] rounded-chip text-textPrimary bg-[rgba(0,0,0,0.35)] px-3 py-2.5 mb-sm"
+              className="border border-rim rounded-chip text-textPrimary bg-glass04 px-3 py-2.5 mb-sm"
             />
             <TextInput
               value={setupConfirmPasscode}
@@ -145,16 +145,16 @@ export default function VaultScreen() {
               placeholder="Confirm passcode"
               secureTextEntry
               placeholderTextColor={colors.textTertiary}
-              className="border border-[rgba(0,229,204,0.25)] rounded-chip text-textPrimary bg-[rgba(0,0,0,0.35)] px-3 py-2.5 mb-sm"
+              className="border border-rim rounded-chip text-textPrimary bg-glass04 px-3 py-2.5 mb-sm"
             />
-            <Pressable className="bg-tealGlow rounded-pill py-2.5 items-center mt-[2px]" onPress={handleSetup}>
-              <Text className="text-[#042A26] font-extrabold text-[13px]">Enable Kosh</Text>
+            <Pressable className="bg-warm500 rounded-pill py-2.5 items-center mt-[2px]" onPress={handleSetup}>
+              <Text className="text-void font-extrabold text-[13px]">Enable Kosh</Text>
             </Pressable>
           </GlassCard>
         ) : null}
 
         {configured && !unlocked ? (
-          <GlassCard className="border-[rgba(0,229,204,0.35)] bg-[rgba(29,43,83,0.26)]">
+          <GlassCard>
             <Text className="text-textPrimary text-[15px] font-bold mb-sm">Unlock vault</Text>
             <TextInput
               value={unlockPasscode}
@@ -162,17 +162,17 @@ export default function VaultScreen() {
               placeholder="Enter passcode"
               secureTextEntry
               placeholderTextColor={colors.textTertiary}
-              className="border border-[rgba(0,229,204,0.25)] rounded-chip text-textPrimary bg-[rgba(0,0,0,0.35)] px-3 py-2.5 mb-sm"
+              className="border border-rim rounded-chip text-textPrimary bg-glass04 px-3 py-2.5 mb-sm"
             />
-            <Pressable className="bg-tealGlow rounded-pill py-2.5 items-center mt-[2px]" onPress={handleUnlock}>
-              <Text className="text-[#042A26] font-extrabold text-[13px]">Unlock</Text>
+            <Pressable className="bg-warm500 rounded-pill py-2.5 items-center mt-[2px]" onPress={handleUnlock}>
+              <Text className="text-void font-extrabold text-[13px]">Unlock</Text>
             </Pressable>
           </GlassCard>
         ) : null}
 
         {configured && unlocked ? (
           <>
-            <GlassCard className="border-[rgba(0,229,204,0.35)] bg-[rgba(29,43,83,0.26)]">
+            <GlassCard>
               <View className="flex-row justify-between items-center mb-sm">
                 <Text className="text-textPrimary text-[15px] font-bold">Vault entries ({vaultLinks.length})</Text>
                 <Pressable onPress={handleLock} className="px-3 py-[7px] rounded-pill border border-rim bg-glass04">
@@ -225,9 +225,9 @@ export default function VaultScreen() {
                         await addEntry(link.id);
                         await refreshData();
                       }}
-                      className="rounded-pill bg-tealGlow px-3 py-[7px]"
+                      className="rounded-pill bg-warm500 px-3 py-[7px]"
                     >
-                      <Text className="text-[#03231F] text-xs font-bold">Add</Text>
+                      <Text className="text-void text-xs font-bold">Add</Text>
                     </Pressable>
                   </View>
                 ))

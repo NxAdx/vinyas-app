@@ -42,7 +42,6 @@ export default function HomeScreen() {
   const initialized = useFileStore((state) => state.initialized);
   const categories = useFileStore((state) => state.categories);
   const ghostLinks = useFileStore((state) => state.ghostLinks);
-  const storageSources = useFileStore((state) => state.storageSources);
   const initialize = useFileStore((state) => state.initialize);
 
   const hydrateVault = useVaultStore((state) => state.hydrate);
@@ -53,7 +52,25 @@ export default function HomeScreen() {
   const setGlobalMode = useAppStore((state) => state.setGlobalMode);
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [newCategoryName, setNewCategoryName] = useState('');
+
+  // We explicitly inject "Other" into the UI render array without modifying the database yet
+  const displayCategories = useMemo(() => {
+    const base = categories.filter((c) => !c.isKosh);
+    if (!base.find(c => c.id === 'cat-other')) {
+      base.push({
+        id: 'cat-other',
+        name: 'Other',
+        icon: 'more-horiz',
+        gradient: ['#718096', '#2D3748'],
+        isKosh: false,
+        isSystem: true,
+        sortOrder: 100,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+    }
+    return base;
+  }, [categories]);
 
   useEffect(() => {
     void (async () => {
@@ -78,25 +95,15 @@ export default function HomeScreen() {
   const koshCount = ghostLinks.filter((link) => link.isKosh).length;
 
   const filteredCategories = useMemo(() => {
-    if (!searchQuery.trim()) return categories.filter((c) => !c.isKosh);
+    if (!searchQuery.trim()) return displayCategories;
     const q = searchQuery.toLowerCase();
-    return categories.filter((c) => !c.isKosh && c.name.toLowerCase().includes(q));
-  }, [categories, searchQuery]);
+    return displayCategories.filter((c) => c.name.toLowerCase().includes(q));
+  }, [displayCategories, searchQuery]);
 
   const recentLinks = useMemo(
     () => [...ghostLinks].sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? '')).slice(0, 5),
     [ghostLinks]
   );
-
-  const handleCreateCategory = async () => {
-    if (!newCategoryName.trim()) return;
-    try {
-      const { createNewCategory } = useFileStore.getState();
-      await createNewCategory(newCategoryName.trim());
-      setNewCategoryName('');
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch { }
-  };
 
   const handleSecretGesture = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
@@ -106,11 +113,13 @@ export default function HomeScreen() {
   return (
     <AppScreen>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName="gap-md pb-xxl">
-        {/* Header */}
-        <View className="flex-row justify-between items-center">
-          <Pressable onLongPress={handleSecretGesture} delayLongPress={700}>
+        {/* Header (with embedded subtitle) */}
+        <View className="flex-row justify-between items-start mt-2">
+          <Pressable onLongPress={handleSecretGesture} delayLongPress={700} className="flex-1">
             <Text className="text-textPrimary text-[28px] font-extrabold">Vinyas</Text>
-            <Text className="text-textTertiary text-xs tracking-widest uppercase">Private Explorer</Text>
+            <Text className="text-textSecondary text-[13px] leading-[18px] pr-4 mt-1">
+              Long-press logo for hidden Kosh entry.
+            </Text>
           </Pressable>
           <Pressable
             onPress={() => router.push('/settings')}
@@ -120,16 +129,8 @@ export default function HomeScreen() {
           </Pressable>
         </View>
 
-        {/* Title */}
-        <View>
-          <Text className="text-textPrimary text-[22px] font-extrabold">Bento Dashboard</Text>
-          <Text className="text-textSecondary text-[13px] leading-[18px]">
-            Long-press logo for hidden Kosh entry. Current mode: {globalMode.toUpperCase()}
-          </Text>
-        </View>
-
         {/* Stats Row */}
-        <View className="flex-row gap-sm">
+        <View className="flex-row gap-sm mt-1">
           <GlassCard className="flex-1">
             <Text className="text-textTertiary text-[10px] tracking-widest uppercase">Bookmarks</Text>
             <Text className="text-textPrimary text-[22px] font-extrabold mt-1">{totalBookmarks}</Text>
@@ -146,13 +147,12 @@ export default function HomeScreen() {
 
         {/* Search */}
         <GlassCard>
-          <Text className="text-textPrimary text-[15px] font-bold mb-sm">Find categories</Text>
           <TextInput
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholder="Search categories"
+            placeholder="Search files and categories..."
             placeholderTextColor={colors.textTertiary}
-            className="border border-rim rounded-chip text-textPrimary bg-glass04 px-3 py-2.5 text-sm"
+            className="border border-rim rounded-chip text-textPrimary bg-glass04 px-4 py-3 text-sm"
           />
         </GlassCard>
 
@@ -169,13 +169,15 @@ export default function HomeScreen() {
                 className="w-[48%] active:opacity-80"
               >
                 <View
-                  className="rounded-[16px] p-4 min-h-[100px] justify-between"
-                  style={{ backgroundColor: `${gradientStart}44`, borderWidth: 1, borderColor: `${gradientStart}66` }}
+                  className="rounded-[16px] p-4 min-h-[95px] justify-between"
+                  style={{ backgroundColor: `${gradientStart}22`, borderWidth: 1, borderColor: `${gradientStart}44` }}
                 >
                   <MaterialIcons name={iconName as any} size={28} color={gradientStart} />
-                  <View className="mt-3">
-                    <Text className="text-textPrimary text-[15px] font-bold">{cat.name}</Text>
-                    <Text className="text-textSecondary text-xs mt-0.5">{bookmarkCount} bookmarks</Text>
+                  <View className="mt-3 flex-row items-center justify-between">
+                    <View>
+                      <Text className="text-textPrimary text-[15px] font-bold">{cat.name}</Text>
+                      <Text className="text-textSecondary text-[11px] mt-0.5">{bookmarkCount} items</Text>
+                    </View>
                   </View>
                 </View>
               </Pressable>
@@ -183,43 +185,67 @@ export default function HomeScreen() {
           })}
         </View>
 
-        {/* Create Category */}
-        <GlassCard>
-          <Text className="text-textPrimary text-[15px] font-bold mb-sm">Create category</Text>
-          <View className="flex-row gap-sm items-center">
-            <TextInput
-              value={newCategoryName}
-              onChangeText={setNewCategoryName}
-              placeholder="Category name"
-              placeholderTextColor={colors.textTertiary}
-              className="flex-1 border border-rim rounded-chip text-textPrimary bg-glass04 px-3 py-2.5 text-sm"
-            />
+        {/* Storage Locations (Files by Google Style) */}
+        <GlassCard className="mt-2">
+          <Text className="text-textPrimary text-[15px] font-bold mb-sm">Storage devices</Text>
+          <View className="gap-[2px]">
             <Pressable
-              onPress={handleCreateCategory}
-              className="bg-warm500 rounded-chip px-4 py-2.5 active:bg-warm300"
+              onPress={() => router.push('/(tabs)/explorer')}
+              className="flex-row items-center justify-between bg-glass04 px-4 py-3 rounded-t-chip border border-rim active:bg-glass07"
             >
-              <Text className="text-textPrimary text-sm font-bold">Add</Text>
+              <View className="flex-row items-center gap-3">
+                <MaterialIcons name="smartphone" size={24} color={colors.warm300} />
+                <View>
+                  <Text className="text-textPrimary font-semibold text-[14px]">Internal Storage</Text>
+                  <Text className="text-textSecondary text-[11px] mt-[2px]">Emulated device storage</Text>
+                </View>
+              </View>
+              <MaterialIcons name="chevron-right" size={20} color={colors.textTertiary} />
+            </Pressable>
+            
+            <Pressable
+              onPress={() => router.push('/(tabs)/explorer')}
+              className="flex-row items-center justify-between bg-glass04 px-4 py-3 rounded-b-chip border border-rim active:bg-glass07"
+            >
+              <View className="flex-row items-center gap-3">
+                <MaterialIcons name="sd-storage" size={24} color={colors.warm300} />
+                <View>
+                  <Text className="text-textPrimary font-semibold text-[14px]">SD Card</Text>
+                  <Text className="text-textSecondary text-[11px] mt-[2px]">External volume</Text>
+                </View>
+              </View>
+              <MaterialIcons name="chevron-right" size={20} color={colors.textTertiary} />
             </Pressable>
           </View>
         </GlassCard>
 
-        {/* Recent Activity */}
-        <GlassCard>
-          <Text className="text-textPrimary text-[15px] font-bold mb-sm">Recent activity</Text>
-          {recentLinks.length === 0 ? (
-            <Text className="text-textSecondary text-[13px]">No recent bookmarks yet. Start exploring!</Text>
-          ) : (
-            recentLinks.map((link) => (
-              <View key={link.id} className="flex-row justify-between items-center py-2 border-b border-rim">
-                <View className="flex-1 min-w-0 mr-2">
-                  <Text numberOfLines={1} className="text-textPrimary text-[13px] font-semibold">{link.fileName}</Text>
-                  <Text className="text-textTertiary text-[11px] mt-[2px]">{link.storageSource} • {link.mimeType}</Text>
-                </View>
-                <Text className="text-textSecondary text-[11px]">{formatBytes(link.fileSize || 0)}</Text>
-              </View>
-            ))
-          )}
-        </GlassCard>
+        {/* Recent Activity (Google Files Inspired) */}
+        {recentLinks.length > 0 && (
+          <View className="mt-2 mb-sm">
+            <Text className="text-textPrimary text-[15px] font-bold mb-sm px-1">Recent files</Text>
+            <FlatList
+              data={recentLinks}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(item) => item.id}
+              contentContainerClassName="gap-sm py-1"
+              renderItem={({ item }) => (
+                <Pressable
+                  className="bg-glass04 border border-rim rounded-card p-3 w-[140px] h-[100px] justify-between active:bg-glass07"
+                  onPress={() => router.push('/(tabs)/explorer')}
+                >
+                  <View className="flex-row justify-between items-start">
+                    <MaterialIcons name="insert-drive-file" size={24} color={colors.warm300} />
+                  </View>
+                  <View>
+                    <Text numberOfLines={1} className="text-textPrimary text-[13px] font-semibold">{item.fileName}</Text>
+                    <Text className="text-textSecondary text-[10px] mt-1">{formatBytes(item.fileSize || 0)}</Text>
+                  </View>
+                </Pressable>
+              )}
+            />
+          </View>
+        )}
       </ScrollView>
     </AppScreen>
   );
