@@ -11,15 +11,26 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import * as Haptics from 'expo-haptics';
 
+import { MaterialIcons } from '@expo/vector-icons';
 import { AppScreen } from '@/src/components/AppScreen';
 import { GlassCard } from '@/src/components/GlassCard';
 import { useAppStore } from '@/src/stores/useAppStore';
 import { useFileStore } from '@/src/stores/useFileStore';
 import { useVaultStore } from '@/src/stores/useVaultStore';
-import { colors, radius, spacing } from '@/src/theme/tokens';
+import { darkColors, lightColors, radius, spacing } from '@/src/theme/tokens';
 
 export default function VaultScreen() {
+  const theme = useAppStore((state) => state.theme);
+  const globalMode = useAppStore((state) => state.globalMode);
+  const colors = theme === 'dark' ? darkColors : lightColors;
+  
+  // Apply a subtle blue tint when in Kosh mode to indicate security
+  const koshBg = globalMode === 'kosh' 
+    ? (theme === 'dark' ? '#080C14' : '#F0F7FF') 
+    : colors.void;
+
   const isFocused = useIsFocused();
 
   useEffect(() => {
@@ -81,13 +92,18 @@ export default function VaultScreen() {
     return ghostLinks.filter((link) => !idSet.has(link.id)).slice(0, 8);
   }, [ghostLinks, vaultLinks]);
 
+  const handleLock = () => {
+    lock();
+    setUnlockPasscode('');
+  };
+
   const handleSetup = async () => {
-    if (!setupPasscode.trim()) {
-      Alert.alert('Setup failed', 'Enter a passcode first.');
+    if (setupPasscode.length !== 6) {
+      Alert.alert('Setup failed', 'Enter a 6-digit passcode.');
       return;
     }
     if (setupPasscode !== setupConfirmPasscode) {
-      Alert.alert('Setup failed', 'Passcode and confirmation do not match.');
+      Alert.alert('Setup failed', 'Passcodes do not match.');
       return;
     }
 
@@ -97,80 +113,140 @@ export default function VaultScreen() {
       setSetupConfirmPasscode('');
       await refreshEntries();
       await refreshData();
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (setupError) {
-      const message = setupError instanceof Error ? setupError.message : 'Could not setup vault.';
-      Alert.alert('Setup failed', message);
+      Alert.alert('Setup failed', 'Could not enable Kosh.');
     }
   };
 
   const handleUnlock = async () => {
+    if (unlockPasscode.length !== 6) return;
     const success = await unlock(unlockPasscode);
     if (!success) {
-      Alert.alert('Unlock failed', 'Invalid passcode. Try again.');
+      Alert.alert('Unlock failed', 'Invalid passcode.');
+      setUnlockPasscode('');
       return;
     }
 
     setUnlockPasscode('');
     await refreshEntries();
     await refreshData();
-  };
-
-  const handleLock = () => {
-    lock();
-    setUnlockPasscode('');
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   };
 
   return (
-    <AppScreen>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName="gap-md pb-xxl">
+    <AppScreen style={{ backgroundColor: koshBg }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 16, paddingBottom: 60 }}>
         <View className="flex-row items-center gap-3">
-          <View className="bg-warm500/10 p-2 rounded-xl border border-warm500/20">
-             <MaterialIcons name="lock-person" size={28} color={colors.warm300} />
+          <View 
+            className="p-2 rounded-xl border"
+            style={{ backgroundColor: colors.glass07, borderColor: colors.rim }}
+          >
+             <MaterialIcons name="lock-person" size={28} color={globalMode === 'kosh' ? colors.tealGlow : colors.warm300} />
           </View>
           <View>
-            <Text className="text-textPrimary text-[26px] font-extrabold tracking-tight">Kosh Vault</Text>
-            <Text className="text-textSecondary text-[12px] opacity-80">Secure area for private ghost bookmarks.</Text>
+            <Text 
+               className="text-[26px] font-extrabold tracking-tight"
+               style={{ color: colors.textPrimary }}
+            >
+              Kosh Vault
+            </Text>
+            <Text 
+              className="text-[12px] opacity-80"
+              style={{ color: colors.textSecondary }}
+            >
+              Secure area for private ghost bookmarks.
+            </Text>
           </View>
         </View>
 
         {!configured ? (
           <GlassCard>
-            <Text className="text-textPrimary text-[15px] font-bold mb-sm">Setup vault</Text>
+            <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '800', marginBottom: 12 }}>Setup Secure Vault</Text>
+            <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 16 }}>Create a 6-digit passcode to protect your vault.</Text>
             <TextInput
               value={setupPasscode}
               onChangeText={setSetupPasscode}
-              placeholder="Create passcode"
+              placeholder="6-digit passcode"
+              maxLength={6}
+              keyboardType="number-pad"
               secureTextEntry
               placeholderTextColor={colors.textTertiary}
-              className="border border-rim rounded-chip text-textPrimary bg-glass04 px-3 py-2.5 mb-sm"
+              style={{ 
+                borderWidth: 1, 
+                borderColor: colors.rim, 
+                borderRadius: 16, 
+                color: colors.textPrimary, 
+                backgroundColor: colors.glass04,
+                paddingHorizontal: 16,
+                paddingVertical: 12,
+                marginBottom: 12
+              }}
             />
             <TextInput
               value={setupConfirmPasscode}
               onChangeText={setSetupConfirmPasscode}
               placeholder="Confirm passcode"
+              maxLength={6}
+              keyboardType="number-pad"
               secureTextEntry
               placeholderTextColor={colors.textTertiary}
-              className="border border-rim rounded-chip text-textPrimary bg-glass04 px-3 py-2.5 mb-sm"
+              style={{ 
+                borderWidth: 1, 
+                borderColor: colors.rim, 
+                borderRadius: 16, 
+                color: colors.textPrimary, 
+                backgroundColor: colors.glass04,
+                paddingHorizontal: 16,
+                paddingVertical: 12,
+                marginBottom: 20
+              }}
             />
-            <Pressable className="bg-warm500 rounded-pill py-2.5 items-center mt-[2px]" onPress={handleSetup}>
-              <Text className="text-void font-extrabold text-[13px]">Enable Kosh</Text>
+            <Pressable 
+              className="rounded-pill py-3 items-center" 
+              style={{ backgroundColor: colors.warm500 }}
+              onPress={handleSetup}
+            >
+              <Text style={{ color: colors.void, fontWeight: '800', fontSize: 14 }}>Enable Vault</Text>
             </Pressable>
           </GlassCard>
         ) : null}
 
         {configured && !unlocked ? (
           <GlassCard>
-            <Text className="text-textPrimary text-[15px] font-bold mb-sm">Unlock vault</Text>
+            <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '800', marginBottom: 12 }}>Unlock Kosh</Text>
+            <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 16 }}>Authenticate access to view secure entries.</Text>
             <TextInput
               value={unlockPasscode}
-              onChangeText={setUnlockPasscode}
-              placeholder="Enter passcode"
+              onChangeText={(txt) => {
+                setUnlockPasscode(txt);
+                if (txt.length === 6) {
+                  // Auto-unlock
+                  handleUnlock();
+                }
+              }}
+              placeholder="Enter 6-digit passcode"
+              maxLength={6}
+              keyboardType="number-pad"
               secureTextEntry
               placeholderTextColor={colors.textTertiary}
-              className="border border-rim rounded-chip text-textPrimary bg-glass04 px-3 py-2.5 mb-sm"
+              style={{ 
+                borderWidth: 1, 
+                borderColor: colors.rim, 
+                borderRadius: 16, 
+                color: colors.textPrimary, 
+                backgroundColor: colors.glass04,
+                paddingHorizontal: 16,
+                paddingVertical: 12,
+                marginBottom: 20
+              }}
             />
-            <Pressable className="bg-warm500 rounded-pill py-2.5 items-center mt-[2px]" onPress={handleUnlock}>
-              <Text className="text-void font-extrabold text-[13px]">Unlock</Text>
+            <Pressable 
+              className="rounded-pill py-3 items-center" 
+              style={{ backgroundColor: colors.warm500 }}
+              onPress={handleUnlock}
+            >
+              <Text style={{ color: colors.void, fontWeight: '800', fontSize: 14 }}>Unlock</Text>
             </Pressable>
           </GlassCard>
         ) : null}
@@ -178,10 +254,14 @@ export default function VaultScreen() {
         {configured && unlocked ? (
           <>
             <GlassCard>
-              <View className="flex-row justify-between items-center mb-sm">
-                <Text className="text-textPrimary text-[15px] font-bold">Vault entries ({vaultLinks.length})</Text>
-                <Pressable onPress={handleLock} className="px-3 py-[7px] rounded-pill border border-rim bg-glass04">
-                  <Text className="text-textSecondary text-xs font-semibold">Lock</Text>
+              <View className="flex-row justify-between items-center mb-4">
+                <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '800' }}>Vault entries ({vaultLinks.length})</Text>
+                <Pressable 
+                  onPress={handleLock} 
+                  className="px-4 py-2 rounded-pill border"
+                  style={{ backgroundColor: colors.glass04, borderColor: colors.rim }}
+                >
+                  <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '700' }}>Lock Vault</Text>
                 </Pressable>
               </View>
 

@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import Constants from 'expo-constants';
+import { useRouter } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import * as Updates from 'expo-updates';
 import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -10,7 +12,7 @@ import { useAppStore } from '@/src/stores/useAppStore';
 import { useAuthStore } from '@/src/stores/useAuthStore';
 import { useFileStore } from '@/src/stores/useFileStore';
 import { useVaultStore } from '@/src/stores/useVaultStore';
-import { colors } from '@/src/theme/tokens';
+import { darkColors, lightColors } from '@/src/theme/tokens';
 
 const CHANGELOG = [
   {
@@ -41,8 +43,9 @@ const CHANGELOG = [
 ];
 
 export default function SettingsScreen() {
-  const globalMode = useAppStore((state) => state.globalMode);
-  const toggleGlobalMode = useAppStore((state) => state.toggleGlobalMode);
+  const theme = useAppStore((state) => state.theme);
+  const setTheme = useAppStore((state) => state.setTheme);
+  const colors = theme === 'dark' ? darkColors : lightColors;
 
   const loading = useFileStore((state) => state.loading);
   const resetAllData = useFileStore((state) => state.resetAllData);
@@ -89,57 +92,61 @@ export default function SettingsScreen() {
           Alert.alert('System Up to Date', 'Vinyas is running the latest production bundle.');
         }
       } else {
-        Alert.alert('Developer Build', 'OTA Updates are disabled in development or unlinked builds.');
+        Alert.alert('Local Context', 'OTA Updates are disabled in developer builds or when unlinked from EAS.');
       }
     } catch (e: any) {
-      console.error('OTA Error:', e);
-      Alert.alert('Sync Error', 'Could not reach the update server. Please check your internet connection.');
+      Alert.alert('Sync Status', 'Could not reach the update server. Ensure you have an internet connection and the app is linked to EAS.');
     }
   };
 
   const handleSetPin = () => {
-    // In a production app, we would use a numeric keypad modal.
-    // For this prototype, we simulate setting a 4-digit PIN for demo.
-    Alert.alert('Set Master PIN', 'Enter a 6-digit PIN to secure your Vinyas vault.', [
+    // Standardizing on 6-digit PIN as per user request
+    Alert.alert('Set Master PIN', 'Security requires a 6-digit access code for Vinyas.', [
       { text: 'Cancel', style: 'cancel' },
       { 
-        text: 'Set PIN (123456)', 
-        onPress: async () => {
-          await setPin('123456');
-          Alert.alert('PIN Set', 'Your Master PIN is now active. Use it to unlock the app.');
+        text: 'Proceed to Lock Screen', 
+        onPress: () => {
+          logout(); // Force them back to the login screen where the setup logic lives
+          router.replace('/login');
         } 
       },
     ]);
   };
 
+  const router = useRouter(); // Need router for navigation
+
   return (
-    <AppScreen>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName="gap-md pb-xxl px-2 pt-2">
-        <Text className="text-textSecondary text-[13px] leading-[18px]">
+    <AppScreen style={{ backgroundColor: colors.void }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 16, paddingBottom: 44 }}>
+        <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 18 }}>
           Control theme mode, security, and environment details.
         </Text>
 
         {/* Theme */}
         <GlassCard>
-          <Text className="text-textPrimary text-[15px] font-bold mb-xs">Theme mode</Text>
-          <Text className="text-textSecondary text-[12px] mb-md font-medium">
-            Toggle between Amoled Dark and Glass Light variants.
+          <View className="flex-row justify-between items-center mb-xs">
+            <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: '700' }}>Theme mode</Text>
+            <MaterialIcons 
+              name={theme === 'dark' ? "dark-mode" : "light-mode"} 
+              size={20} 
+              color={colors.tealGlow} 
+            />
+          </View>
+          <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 16 }}>
+            Switch between AMOLED Liquid and Glass Light variants.
           </Text>
           <Pressable
-            onPress={async () => {
-              toggleGlobalMode();
-              Alert.alert('Theme Override', 'The app will now reload to apply the new design system globally.', [
-                {
-                  text: 'Apply & Restart',
-                  onPress: async () => {
-                    await Updates.reloadAsync();
-                  }
-                }
-              ]);
+            onPress={() => {
+              const newTheme = theme === 'dark' ? 'light' : 'dark';
+              setTheme(newTheme);
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             }}
-            className="bg-warm500 rounded-pill py-3 items-center active:bg-warm300"
+            className="rounded-pill py-3 items-center"
+            style={{ backgroundColor: colors.warm500 }}
           >
-            <Text className="text-void font-extrabold text-[13px]">Apply Theme Switch</Text>
+            <Text style={{ color: colors.void, fontWeight: '800', fontSize: 13 }}>
+              Switch to {theme === 'dark' ? 'Light' : 'Dark'} Mode
+            </Text>
           </Pressable>
         </GlassCard>
 

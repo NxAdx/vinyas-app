@@ -1,4 +1,4 @@
-export const colors = {
+export const darkColors = {
   void: '#000000',
   void01: '#000000',
   void02: '#000000',
@@ -19,6 +19,31 @@ export const colors = {
   textSecondary: 'rgba(255,255,255,0.60)',
   textTertiary: 'rgba(255,255,255,0.40)',
 };
+
+export const lightColors = {
+  void: '#F7F8FA',
+  void01: '#FFFFFF',
+  void02: '#FFFFFF',
+  glass04: 'rgba(0,0,0,0.03)',
+  glass07: 'rgba(0,0,0,0.05)',
+  glass10: 'rgba(0,0,0,0.08)',
+  glass15: 'rgba(0,0,0,0.12)',
+  rim: 'rgba(0,0,0,0.06)',
+  warm500: '#2D3748',
+  warm600: '#4A5568',
+  warm300: '#718096',
+  kosh500: '#EBF4FF',
+  kosh400: '#3182CE',
+  tealGlow: '#2C7A7B',
+  danger: '#E53E3E',
+  success: '#38A169',
+  textPrimary: '#1A202C',
+  textSecondary: '#4A5568',
+  textTertiary: '#718096',
+};
+
+// Default export for backward compatibility
+export const colors = darkColors;
 
 export const spacing = {
   xs: 4,

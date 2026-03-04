@@ -5,7 +5,8 @@ import { AppScreen } from '@/src/components/AppScreen';
 import { GlassCard } from '@/src/components/GlassCard';
 import { getAnalyticsSummary, type AnalyticsSummary } from '@/src/services/analytics.service';
 import { useFileStore } from '@/src/stores/useFileStore';
-import { colors, radius, spacing } from '@/src/theme/tokens';
+import { useAppStore } from '@/src/stores/useAppStore';
+import { darkColors, lightColors } from '@/src/theme/tokens';
 
 function formatBytes(bytes: number): string {
   const mb = bytes / (1024 * 1024);
@@ -16,6 +17,9 @@ function formatBytes(bytes: number): string {
 }
 
 export default function AnalyticsScreen() {
+  const theme = useAppStore((state) => state.theme);
+  const colors = theme === 'dark' ? darkColors : lightColors;
+
   const initialized = useFileStore((state) => state.initialized);
   const initialize = useFileStore((state) => state.initialize);
   const categories = useFileStore((state) => state.categories);
@@ -59,44 +63,44 @@ export default function AnalyticsScreen() {
   }, [categories, ghostLinks]);
 
   return (
-    <AppScreen>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName="gap-md pb-xxl">
+    <AppScreen style={{ backgroundColor: colors.void }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 16, paddingBottom: 44 }}>
         <View className="gap-1">
-          <Text className="text-textPrimary text-[26px] font-extrabold">Analytics</Text>
-          <Text className="text-textSecondary text-[13px] leading-[19px]">Local-only usage summary from your ghost bookmarks.</Text>
+          <Text style={{ color: colors.textPrimary, fontSize: 26, fontWeight: '800' }}>Analytics</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 19 }}>Local-only usage summary from your ghost bookmarks.</Text>
         </View>
 
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerClassName="gap-sm py-sm"
+          contentContainerStyle={{ gap: 12, paddingVertical: 12 }}
         >
-          <GlassCard className="min-w-[120px]">
-            <Text className="text-textTertiary text-xs mb-1 uppercase">Bookmarks</Text>
-            <Text className="text-textPrimary text-[20px] font-extrabold">{summary?.totalBookmarks ?? ghostLinks.length}</Text>
+          <GlassCard style={{ minWidth: 120 }}>
+            <Text style={{ color: colors.textTertiary, fontSize: 12, marginBottom: 4, textTransform: 'uppercase' }}>Bookmarks</Text>
+            <Text style={{ color: colors.textPrimary, fontSize: 20, fontWeight: '800' }}>{summary?.totalBookmarks ?? ghostLinks.length}</Text>
           </GlassCard>
-          <GlassCard className="min-w-[120px]">
-            <Text className="text-textTertiary text-xs mb-1 uppercase">Kosh</Text>
-            <Text className="text-textPrimary text-[20px] font-extrabold">{summary?.vaultBookmarks ?? 0}</Text>
+          <GlassCard style={{ minWidth: 120 }}>
+            <Text style={{ color: colors.textTertiary, fontSize: 12, marginBottom: 4, textTransform: 'uppercase' }}>Kosh</Text>
+            <Text style={{ color: colors.textPrimary, fontSize: 20, fontWeight: '800' }}>{summary?.vaultBookmarks ?? 0}</Text>
           </GlassCard>
         </ScrollView>
 
         <GlassCard>
-          <Text className="text-textPrimary text-[15px] font-bold mb-sm">Total bookmarked size</Text>
-          <Text className="text-warm300 text-[22px] font-extrabold">{formatBytes(summary?.totalSizeBytes ?? 0)}</Text>
+          <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: '700', marginBottom: 8 }}>Total bookmarked size</Text>
+          <Text style={{ color: colors.warm300, fontSize: 22, fontWeight: '800' }}>{formatBytes(summary?.totalSizeBytes ?? 0)}</Text>
         </GlassCard>
 
         <GlassCard>
-          <Text className="text-textPrimary text-[15px] font-bold mb-sm">Category distribution</Text>
-          <View className="gap-sm">
+          <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: '700', marginBottom: 12 }}>Category distribution</Text>
+          <View className="gap-3">
             {categoryBreakdown.map((item) => (
               <View key={item.id} className="gap-[6px]">
                 <View className="flex-row justify-between">
-                  <Text className="text-textSecondary text-xs">{item.name}</Text>
-                  <Text className="text-warm300 text-xs font-bold">{item.count}</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 12 }}>{item.name}</Text>
+                  <Text style={{ color: colors.warm300, fontSize: 12, fontWeight: '700' }}>{item.count}</Text>
                 </View>
-                <View className="w-full h-2 rounded-pill bg-glass04 overflow-hidden">
-                  <View className="h-full rounded-pill bg-warm500" style={{ width: `${Math.max(4, item.ratio * 100)}%` }} />
+                <View style={{ width: '100%', height: 8, borderRadius: 4, backgroundColor: colors.glass04, overflow: 'hidden' }}>
+                  <View style={{ height: '100%', borderRadius: 4, backgroundColor: colors.warm500, width: `${Math.max(4, item.ratio * 100)}%` }} />
                 </View>
               </View>
             ))}
@@ -104,26 +108,26 @@ export default function AnalyticsScreen() {
         </GlassCard>
 
         <GlassCard>
-          <Text className="text-textPrimary text-[15px] font-bold mb-sm">Storage sources</Text>
+          <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: '700', marginBottom: 12 }}>Storage sources</Text>
           {storageSources.map((source) => (
-            <View key={source.type} className="flex-row justify-between py-[7px] border-b border-rim">
-              <Text className="text-textSecondary text-xs uppercase">{source.type}</Text>
-              <Text className="text-textPrimary text-xs font-bold">{source.isConnected ? 'Connected' : 'Disconnected'}</Text>
+            <View key={source.type} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 7, borderBottomWidth: 1, borderBottomColor: colors.rim }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 12, textTransform: 'uppercase' }}>{source.type}</Text>
+              <Text style={{ color: colors.textPrimary, fontSize: 12, fontWeight: '700' }}>{source.isConnected ? 'Connected' : 'Disconnected'}</Text>
             </View>
           ))}
         </GlassCard>
 
         <GlassCard>
-          <Text className="text-textPrimary text-[15px] font-bold mb-sm">Recent events</Text>
+          <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: '700', marginBottom: 12 }}>Recent events</Text>
           {summary?.recentEvents?.length ? (
             summary.recentEvents.slice(0, 10).map((event) => (
-              <View key={event.id} className="py-[7px] border-b border-rim">
-                <Text className="text-textPrimary text-xs font-bold capitalize">{event.eventType}</Text>
-                <Text className="text-textTertiary text-[11px] mt-[2px]">{new Date(event.timestamp).toLocaleString()}</Text>
+              <View key={event.id} style={{ paddingVertical: 7, borderBottomWidth: 1, borderBottomColor: colors.rim }}>
+                <Text style={{ color: colors.textPrimary, fontSize: 12, fontWeight: '700', textTransform: 'capitalize' }}>{event.eventType}</Text>
+                <Text style={{ color: colors.textTertiary, fontSize: 11, marginTop: 2 }}>{new Date(event.timestamp).toLocaleString()}</Text>
               </View>
             ))
           ) : (
-            <Text className="text-textSecondary text-xs">
+            <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
               {loadingSummary ? 'Loading activity...' : 'No analytics events yet.'}
             </Text>
           )}

@@ -21,17 +21,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     initialize: async () => {
         try {
             const storedPin = await SecureStore.getItemAsync(PIN_STORAGE_KEY);
-            const exists = !!storedPin;
+            const exists = (storedPin || '').length === 6; // Standardize on 6
             set({ 
                 hasPin: exists, 
-                isAuthenticated: !exists // If no PIN, you are "unlocked"
+                isAuthenticated: !exists // If no 6-digit PIN, you are "unlocked"
             });
+            
+            if (storedPin && storedPin.length !== 6) {
+              // Clear legacy or invalid PINs
+              await SecureStore.deleteItemAsync(PIN_STORAGE_KEY);
+              set({ hasPin: false, isAuthenticated: true });
+            }
         } catch (e) {
             set({ hasPin: false, isAuthenticated: true });
         }
     },
 
     setPin: async (pin: string) => {
+        if (pin.length !== 6) return false;
         try {
             await SecureStore.setItemAsync(PIN_STORAGE_KEY, pin);
             set({ hasPin: true, isAuthenticated: true });

@@ -11,12 +11,12 @@ import {
   View,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-
 import { AppScreen } from '@/src/components/AppScreen';
 import { GlassCard } from '@/src/components/GlassCard';
 import type { ExplorerFileItem } from '@/src/types';
+import { useAppStore } from '@/src/stores/useAppStore';
 import { useFileStore } from '@/src/stores/useFileStore';
-import { colors, radius, spacing } from '@/src/theme/tokens';
+import { darkColors, lightColors } from '@/src/theme/tokens';
 
 function formatBytes(bytes: number): string {
   const mb = bytes / (1024 * 1024);
@@ -27,6 +27,9 @@ function formatBytes(bytes: number): string {
 }
 
 export default function ExplorerScreen() {
+  const theme = useAppStore((state) => state.theme);
+  const colors = theme === 'dark' ? darkColors : lightColors;
+
   const initialized = useFileStore((state) => state.initialized);
   const loading = useFileStore((state) => state.loading);
   const categories = useFileStore((state) => state.categories);
@@ -128,22 +131,32 @@ export default function ExplorerScreen() {
         }}
         delayLongPress={200}
       >
-        <GlassCard className={`mb-sm ${isSelectedMode ? 'border-warm500 bg-warm500/10' : ''}`}>
+        <GlassCard 
+          style={{ 
+            marginBottom: 8, 
+            borderColor: isSelectedMode ? colors.warm500 : colors.rim,
+            backgroundColor: isSelectedMode ? `${colors.warm500}11` : colors.glass04
+          }}
+        >
           <View className="flex-row justify-between gap-md">
-            <Text className="text-textPrimary text-sm font-bold flex-1" numberOfLines={1}>
+            <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '700', flex: 1 }} numberOfLines={1}>
               {item.name}
             </Text>
-            <Text className="text-textSecondary text-xs">{formatBytes(item.size)}</Text>
+            <Text style={{ color: colors.textSecondary, fontSize: 12 }}>{formatBytes(item.size)}</Text>
           </View>
-          <Text className="text-textTertiary text-xs mt-[5px]">
+          <Text style={{ color: colors.textTertiary, fontSize: 12, marginTop: 5 }}>
             {item.mimeType} • {item.storageSource}
           </Text>
-          <Text className="text-textTertiary text-xs mt-[5px]">
+          <Text style={{ color: colors.textTertiary, fontSize: 12, marginTop: 5 }}>
             {hasBookmarks ? `${linksForFile.length} bookmark(s)` : 'Not bookmarked'}
           </Text>
-          <View className="mt-sm flex-row">
+          <View className="mt-2 flex-row">
             <Pressable
-              className={`px-3 py-2 rounded-pill ${isSelectedMode ? 'bg-glass10 border-rim' : 'bg-warm500'}`}
+              className="px-3 py-2 rounded-pill border"
+              style={{ 
+                backgroundColor: isBookmarkedInSelectedCategory ? colors.glass10 : colors.warm500,
+                borderColor: isBookmarkedInSelectedCategory ? colors.rim : colors.warm500
+              }}
               onPress={async () => {
                 if (selectedUris.size > 0) return; // Disable single action in batch mode
                 if (!selectedCategoryId) {
@@ -164,7 +177,7 @@ export default function ExplorerScreen() {
                 }
               }}
             >
-              <Text className={`text-xs font-bold ${isSelectedMode ? 'text-textSecondary' : 'text-textPrimary'}`}>
+              <Text style={{ fontSize: 12, fontWeight: '800', color: isBookmarkedInSelectedCategory ? colors.textSecondary : colors.void }}>
                 {isBookmarkedInSelectedCategory ? 'Remove' : 'Ghost Bookmark'}
               </Text>
             </Pressable>
@@ -175,20 +188,23 @@ export default function ExplorerScreen() {
   };
 
   return (
-    <AppScreen>
+    <AppScreen style={{ backgroundColor: colors.void }}>
       <View className="mb-md gap-[4px]">
-        <Text className="text-textPrimary text-[26px] font-extrabold">Explorer</Text>
-        <Text className="text-textSecondary text-[13px] leading-[19px]">Browsing source files and pinning ghost bookmarks.</Text>
+        <Text style={{ color: colors.textPrimary, fontSize: 26, fontWeight: '800' }}>Explorer</Text>
+        <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 19 }}>Browsing source files and pinning ghost bookmarks.</Text>
       </View>
 
-      <View className="flex-row items-center gap-2 bg-glass04 border border-rim rounded-chip px-4 py-1">
+      <View 
+        className="flex-row items-center gap-2 border rounded-pill px-4 py-1"
+        style={{ backgroundColor: colors.glass04, borderColor: colors.rim }}
+      >
         <MaterialIcons name="search" size={20} color={colors.textTertiary} />
         <TextInput
           value={query}
           onChangeText={setQuery}
           placeholder="Search by file name or type..."
           placeholderTextColor={colors.textTertiary}
-          className="flex-1 text-textPrimary py-3 text-[15px]"
+          style={{ flex: 1, color: colors.textPrimary, paddingVertical: 12, fontSize: 15 }}
         />
         {query.length > 0 && (
           <Pressable onPress={() => setQuery('')} className="p-2 -mr-2">
@@ -197,20 +213,26 @@ export default function ExplorerScreen() {
         )}
       </View>
 
-
-
       <SectionList
         sections={sections as any}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
-        contentContainerClassName="gap-[2px] pb-xxl"
+        contentContainerStyle={{ gap: 2, paddingBottom: 80 }}
         renderSectionHeader={({ section }) => (
           <Pressable
             onPress={() => {
               if (query.trim()) return;
               toggleFolder(section.title);
             }}
-            className="flex-row items-center py-sm mt-xs mb-[4px] gap-2 active:opacity-70"
+            style={({ pressed }) => ({
+              flexDirection: 'row',
+              alignItems: 'center',
+              paddingVertical: 12,
+              marginTop: 4,
+              marginBottom: 4,
+              gap: 8,
+              opacity: pressed ? 0.7 : 1
+            })}
           >
             {!query.trim() && (
               <MaterialIcons
@@ -224,60 +246,81 @@ export default function ExplorerScreen() {
               size={20}
               color={colors.warm300}
             />
-            <Text className="text-textPrimary text-sm font-bold flex-1">
+            <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '700', flex: 1 }}>
               {section.title}
             </Text>
-            <Text className="text-textSecondary text-xs">
+            <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
               {section.originalData?.length ?? section.data.length} files
             </Text>
           </Pressable>
         )}
         renderItem={({ item, section }) => (
-          <View className="pl-6 border-l border-rim ml-xs">
+          <View style={{ paddingLeft: 24, borderLeftWidth: 1, borderLeftColor: colors.rim, marginLeft: 8 }}>
             {renderItem({ item })}
           </View>
         )}
         ListEmptyComponent={
-          <Text className="text-textSecondary text-[13px] text-center mt-lg">
-            No files found for this query. Try a different name or clear the filter.
-          </Text>
+          (!loading && !error) ? (
+            <Text style={{ color: colors.textSecondary, fontSize: 13, textAlign: 'center', marginTop: 32 }}>
+              No files found for this query. Try a different name or clear the filter.
+            </Text>
+          ) : null
         }
       />
 
-      {loading ? <Text className="text-textSecondary text-xs mt-sm text-center">Scanning storage...</Text> : null}
+      {loading ? <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 8, textAlign: 'center' }}>Scanning storage...</Text> : null}
       
       {error && !loading ? (
-        <View className="flex-1 items-center justify-center mt-xl px-md">
+        <View className="flex-1 items-center justify-center p-6">
           <MaterialIcons name="folder-shared" size={64} color={colors.warm300} style={{ opacity: 0.5 }} />
-          <Text className="text-textPrimary text-[18px] font-bold mt-md mb-xs text-center">Storage Access Required</Text>
-          <Text className="text-textSecondary text-[14px] text-center mb-lg leading-[20px]">
-            Vinyas needs permission to read a folder to find files. This is usually your Internal Storage or SD Card.
+          <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '800', marginTop: 16, marginBottom: 4, textAlign: 'center' }}>Storage Access Required</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 14, textAlign: 'center', marginBottom: 24, lineHeight: 20 }}>
+            Android requires you to explicitly select a folder for Vinyas to scan. This is for your privacy.
           </Text>
           <Pressable
             onPress={async () => {
               await grantAccess();
             }}
-            className="bg-warm500 rounded-pill px-6 py-3 items-center active:bg-warm300"
+            className="rounded-pill px-8 py-3 items-center"
+            style={{ backgroundColor: colors.warm500 }}
           >
-            <Text className="text-void text-sm font-bold">Grant Access</Text>
+            <Text style={{ color: colors.void, fontSize: 14, fontWeight: '800' }}>Select Folder</Text>
           </Pressable>
         </View>
       ) : null}
 
       {selectedUris.size > 0 && (
         <View className="absolute bottom-4 left-4 right-4 items-center">
-          <GlassCard className="flex-row items-center gap-md py-3 px-lg shadow-black/50 shadow-lg border-warm500 bg-void01">
-            <Text className="text-textPrimary text-[15px] font-extrabold">{selectedUris.size} selected</Text>
+          <GlassCard 
+            style={{ 
+              flexDirection: 'row', 
+              alignItems: 'center', 
+              gap: 16, 
+              paddingVertical: 12, 
+              paddingHorizontal: 20,
+              borderColor: colors.warm500,
+              borderWidth: 1,
+              backgroundColor: colors.void01,
+              elevation: 8,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.3,
+              shadowRadius: 8
+            }}
+          >
+            <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: '800' }}>{selectedUris.size} selected</Text>
             
             <View className="flex-row gap-2">
               <Pressable
-                className="px-3 py-2 rounded-pill bg-glass10 border border-rim"
+                className="px-3 py-2 rounded-pill border"
+                style={{ backgroundColor: colors.glass10, borderColor: colors.rim }}
                 onPress={() => setSelectedUris(new Set())}
               >
-                <Text className="text-textSecondary text-xs font-bold">Clear</Text>
+                <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '800' }}>Clear</Text>
               </Pressable>
               <Pressable
-                className="px-4 py-2 rounded-pill bg-warm500"
+                className="px-4 py-2 rounded-pill"
+                style={{ backgroundColor: colors.warm500 }}
                 onPress={async () => {
                   if (!selectedCategoryId) {
                     Alert.alert('Select a category', 'Choose a category to bookmark into.');
@@ -296,7 +339,7 @@ export default function ExplorerScreen() {
                   }
                 }}
               >
-                <Text className="text-textPrimary text-xs font-bold">Bookmark All</Text>
+                <Text style={{ color: colors.void, fontSize: 12, fontWeight: '800' }}>Bookmark All</Text>
               </Pressable>
             </View>
           </GlassCard>

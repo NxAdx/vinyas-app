@@ -5,8 +5,9 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 
-import { colors } from '@/src/theme/tokens';
+import { darkColors, lightColors } from '@/src/theme/tokens';
 import { useAuthStore } from '@/src/stores/useAuthStore';
+import { useAppStore } from '@/src/stores/useAppStore';
 import { OtaUpdater } from '@/src/components/OtaUpdater';
 
 // Keep the native splash visible until we've resolved auth state
@@ -20,6 +21,9 @@ export default function RootLayout() {
   const initialize = useAuthStore((state) => state.initialize);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const hasPin = useAuthStore((state) => state.hasPin);
+
+  const theme = useAppStore((state) => state.theme);
+  const colors = theme === 'dark' ? darkColors : lightColors;
 
   // Fire auth initialization ASAP, but don't block the render tree
   useEffect(() => {
@@ -52,7 +56,7 @@ export default function RootLayout() {
   return (
     <>
       <OtaUpdater />
-      <StatusBar style="light" />
+      <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
       <Stack
         screenOptions={{
           headerShown: false,

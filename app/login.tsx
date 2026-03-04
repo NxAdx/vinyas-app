@@ -1,16 +1,21 @@
-import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, Pressable } from 'react-native';
-import { useRouter, useSegments } from 'expo-router';
+import { useEffect, useState, useMemo } from 'react';
+import { StyleSheet, Text, View, Pressable, Dimensions } from 'react-native';
+import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import { BlurView } from 'expo-blur';
+import { MaterialIcons } from '@expo/vector-icons';
 
 import { AppScreen } from '@/src/components/AppScreen';
 import { useAuthStore } from '@/src/stores/useAuthStore';
-import { colors } from '@/src/theme/tokens';
-import { MaterialIcons } from '@expo/vector-icons';
+import { useAppStore } from '@/src/stores/useAppStore';
+import { darkColors, lightColors } from '@/src/theme/tokens';
+
+const { width } = Dimensions.get('window');
 
 export default function LoginScreen() {
     const router = useRouter();
-    const segments = useSegments();
+    const theme = useAppStore((state) => state.theme);
+    const colors = theme === 'dark' ? darkColors : lightColors;
 
     const initialize = useAuthStore((state) => state.initialize);
     const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -22,20 +27,14 @@ export default function LoginScreen() {
     const [setupPin, setSetupPin] = useState('');
     const [error, setError] = useState(false);
 
-    // 1. Wait for Auth Store Initialization
     useEffect(() => {
         void initialize();
     }, [initialize]);
 
-    // 2. Navigation Interceptor (Redirect if already authenticated)
     useEffect(() => {
-        if (hasPin === null) return; // Still loading
-
+        if (hasPin === null) return;
         if (isAuthenticated) {
-            // Small delay prevents flickering
-            setTimeout(() => {
-                router.replace('/(tabs)');
-            }, 50);
+            router.replace('/(tabs)');
         }
     }, [isAuthenticated, hasPin, router]);
 
@@ -45,7 +44,6 @@ export default function LoginScreen() {
         if (error) {
             setError(false);
             setPinState('');
-            setSetupPin('');
         }
 
         if (key === 'back') {
@@ -53,44 +51,47 @@ export default function LoginScreen() {
             return;
         }
 
-        if (pin.length < 4) {
+        if (pin.length < 6) {
             const newPin = pin + key;
             setPinState(newPin);
 
-            if (newPin.length === 4) {
+            if (newPin.length === 6) {
                 if (!hasPin) {
-                    // SETUP MODE
                     if (!setupPin) {
-                        // Step 1: Entered first time
+                        // First entry of setup
                         setTimeout(() => {
                             setSetupPin(newPin);
                             setPinState('');
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                        }, 300);
+                        }, 250);
                     } else {
-                        // Step 2: Confirm
+                        // Confirmation of setup
                         if (setupPin === newPin) {
                             const success = await setPin(newPin);
                             if (success) {
                                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                                // Redirect is handled by useEffect
                             } else {
                                 setError(true);
+                                setPinState('');
+                                setSetupPin('');
                             }
                         } else {
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
                             setError(true);
+                            setPinState('');
                             setSetupPin('');
                         }
                     }
                 } else {
-                    // VERIFY MODE
+                    // Standard Verification
                     const isValid = await verifyPin(newPin);
                     if (isValid) {
                         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                     } else {
                         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
                         setError(true);
-                        setTimeout(() => setPinState(''), 500);
+                        setTimeout(() => setPinState(''), 400);
                     }
                 }
             }
@@ -98,64 +99,112 @@ export default function LoginScreen() {
     };
 
     if (hasPin === null || isAuthenticated) {
-        return <AppScreen><View className="flex-1 bg-void" /></AppScreen>; // Blank while routing
+        return <View style={{ flex: 1, backgroundColor: colors.void }} />;
     }
 
-    const isSetupConfirm = !hasPin && setupPin.length === 4;
-
-    let title = 'Enter PIN';
-    if (!hasPin) {
-        title = isSetupConfirm ? 'Confirm PIN' : 'Create PIN';
-    }
+    const isConfirming = !hasPin && setupPin.length === 6;
+    const title = !hasPin ? (isConfirming ? 'Confirm your PIN' : 'Create Master PIN') : 'Enter Security PIN';
+    const subtitle = !hasPin 
+        ? 'Protect your files with a secure 6-digit access code.' 
+        : 'Welcome back. Authenticate to unlock Vinyas.';
 
     return (
-        <AppScreen>
-            <View className="flex-1 justify-center items-center">
+        <AppScreen padded={false}>
+            <View className="flex-1" style={{ backgroundColor: colors.void }}>
+                {/* Background Accent */}
+                <View 
+                    style={{ 
+                        position: 'absolute', 
+                        top: -100, 
+                        right: -100, 
+                        width: 300, 
+                        height: 300, 
+                        borderRadius: 150, 
+                        backgroundColor: theme === 'dark' ? 'rgba(0, 229, 204, 0.05)' : 'rgba(0, 229, 204, 0.1)',
+                        filter: 'blur(80px)' as any
+                    }} 
+                />
 
-                <View className="mb-xl items-center">
-                    <MaterialIcons name="lock-outline" size={48} color={error ? colors.danger : colors.warm300} />
-                    <Text className="text-textPrimary text-2xl font-extrabold mt-4">{title}</Text>
-                    <Text className="text-textSecondary text-sm mt-2 text-center">
-                        {!hasPin ? 'Secure the Vinyas app with a master PIN.' : 'Authenticate to continue.'}
-                    </Text>
-                </View>
-
-                {/* Pin Dots */}
-                <View className="flex-row gap-4 mb-xxl h-[20px]">
-                    {[0, 1, 2, 3].map((i) => (
-                        <View
-                            key={i}
-                            className={`w-4 h-4 rounded-full ${pin.length > i ? 'bg-textPrimary' : 'bg-glass10'} ${error ? 'bg-danger' : ''}`}
-                        />
-                    ))}
-                </View>
-
-                {/* Number Pad */}
-                <View className="w-[80%] max-w-[320px] flex-row flex-wrap justify-between gap-y-6">
-                    {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((num) => (
-                        <Pressable
-                            key={num}
-                            onPress={() => handleKeyPress(num)}
-                            className="w-[30%] aspect-square rounded-full bg-glass04 items-center justify-center active:bg-glass10 border border-transparent active:border-rim"
+                <View className="flex-1 justify-center items-center px-lg">
+                    {/* Header Header */}
+                    <View className="items-center mb-xl">
+                        <View 
+                            className="w-16 h-16 rounded-3xl items-center justify-center mb-4 border"
+                            style={{ 
+                                backgroundColor: colors.glass07,
+                                borderColor: error ? colors.danger : colors.rim
+                            }}
                         >
-                            <Text className="text-textPrimary text-2xl font-bold">{num}</Text>
-                        </Pressable>
-                    ))}
-                    <View className="w-[30%] aspect-square" />
-                    <Pressable
-                        onPress={() => handleKeyPress('0')}
-                        className="w-[30%] aspect-square rounded-full bg-glass04 items-center justify-center active:bg-glass10 border border-transparent active:border-rim"
-                    >
-                        <Text className="text-textPrimary text-2xl font-bold">0</Text>
-                    </Pressable>
-                    <Pressable
-                        onPress={() => handleKeyPress('back')}
-                        className="w-[30%] aspect-square rounded-full items-center justify-center active:bg-glass04"
-                    >
-                        <MaterialIcons name="backspace" size={28} color={colors.textSecondary} />
-                    </Pressable>
-                </View>
+                            <MaterialIcons 
+                                name={hasPin ? "lock" : "shield"} 
+                                size={32} 
+                                color={error ? colors.danger : colors.tealGlow} 
+                            />
+                        </View>
+                        <Text className="text-3xl font-extrabold text-center tracking-tight" style={{ color: colors.textPrimary }}>
+                            {title}
+                        </Text>
+                        <Text className="text-center mt-2 px-4 leading-5" style={{ color: colors.textSecondary }}>
+                            {subtitle}
+                        </Text>
+                    </View>
 
+                    {/* PIN Indicators */}
+                    <View className="flex-row gap-4 mb-12 h-6 items-center">
+                        {[0, 1, 2, 3, 4, 5].map((i) => (
+                            <View
+                                key={i}
+                                className={`w-[12px] h-[12px] rounded-full border ${pin.length > i ? '' : 'border-transparent'}`}
+                                style={{ 
+                                    backgroundColor: pin.length > i 
+                                        ? (error ? colors.danger : colors.tealGlow) 
+                                        : colors.glass15,
+                                    borderColor: pin.length > i ? 'rgba(255,255,255,0.2)' : 'transparent'
+                                }}
+                            />
+                        ))}
+                    </View>
+
+                    {/* Numeric Keypad */}
+                    <View className="w-full flex-row flex-wrap justify-between gap-y-5 px-4 mb-8">
+                        {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((num) => (
+                            <Pressable
+                                key={num}
+                                onPress={() => handleKeyPress(num)}
+                                className="w-[28%] aspect-square rounded-full items-center justify-center border"
+                                style={{ 
+                                    backgroundColor: colors.glass04,
+                                    borderColor: colors.rim
+                                }}
+                            >
+                                <Text className="text-2xl font-bold" style={{ color: colors.textPrimary }}>{num}</Text>
+                            </Pressable>
+                        ))}
+                        <View className="w-[28%] aspect-square" />
+                        <Pressable
+                            onPress={() => handleKeyPress('0')}
+                            className="w-[28%] aspect-square rounded-full items-center justify-center border"
+                            style={{ 
+                                backgroundColor: colors.glass04,
+                                borderColor: colors.rim
+                            }}
+                        >
+                            <Text className="text-2xl font-bold" style={{ color: colors.textPrimary }}>0</Text>
+                        </Pressable>
+                        <Pressable
+                            onPress={() => handleKeyPress('back')}
+                            className="w-[28%] aspect-square rounded-full items-center justify-center active:bg-glass10"
+                        >
+                            <MaterialIcons name="backspace" size={28} color={error ? colors.danger : colors.textSecondary} />
+                        </Pressable>
+                    </View>
+
+                    {error && (
+                        <Text className="font-bold text-xs uppercase tracking-widest mb-4" style={{ color: colors.danger }}>
+                            Invalid PIN • Try Again
+                        </Text>
+                    )}
+                </View>
             </View>
         </AppScreen>
     );

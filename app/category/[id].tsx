@@ -14,10 +14,14 @@ import { AppScreen } from '@/src/components/AppScreen';
 import { GlassCard } from '@/src/components/GlassCard';
 import { useFileStore } from '@/src/stores/useFileStore';
 import { useVaultStore } from '@/src/stores/useVaultStore';
-import { colors, radius, spacing } from '@/src/theme/tokens';
+import { useAppStore } from '@/src/stores/useAppStore';
+import { darkColors, lightColors } from '@/src/theme/tokens';
 
 export default function CategoryDetailScreen() {
   const router = useRouter();
+  const theme = useAppStore((state) => state.theme);
+  const colors = theme === 'dark' ? darkColors : lightColors;
+
   const params = useLocalSearchParams<{ id: string }>();
   const categoryId = params.id;
 
@@ -67,11 +71,11 @@ export default function CategoryDetailScreen() {
   }, [categoryId, ghostLinks, query]);
 
   return (
-    <AppScreen>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        <View style={styles.header}>
-          <Text style={styles.title}>{category?.name ?? 'Other category'}</Text>
-          <Text style={styles.subtitle}>
+    <AppScreen style={{ backgroundColor: colors.void }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 16, paddingBottom: 44 }}>
+        <View className="gap-1">
+          <Text style={{ color: colors.textPrimary, fontSize: 24, fontWeight: '800' }}>{category?.name ?? 'Other category'}</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 18 }}>
             {categoryId === 'cat-other' 
               ? 'Uncategorized items and recently accessed files.' 
               : 'Ghost links pinned under this category.'}
@@ -79,37 +83,46 @@ export default function CategoryDetailScreen() {
         </View>
 
         <GlassCard>
-          <Text style={styles.sectionTitle}>Filter links</Text>
+          <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: '700', marginBottom: 8 }}>Filter links</Text>
           <TextInput
             value={query}
             onChangeText={setQuery}
             placeholder="Search file name/type"
             placeholderTextColor={colors.textTertiary}
-            style={styles.input}
+            style={{ 
+              borderWidth: 1, 
+              borderColor: colors.rim, 
+              borderRadius: 24, 
+              color: colors.textPrimary, 
+              backgroundColor: colors.glass04,
+              paddingHorizontal: 16,
+              paddingVertical: 12
+            }}
           />
         </GlassCard>
 
         {filteredLinks.length === 0 ? (
           <GlassCard>
-            <Text style={styles.emptyText}>No bookmarks in this category yet.</Text>
+            <Text style={{ color: colors.textSecondary, fontSize: 13 }}>No bookmarks in this category yet.</Text>
           </GlassCard>
         ) : (
           filteredLinks.map((link) => (
             <GlassCard key={link.id}>
-              <Text style={styles.linkTitle} numberOfLines={1}>
+              <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '700' }} numberOfLines={1}>
                 {link.fileName}
               </Text>
-              <Text style={styles.linkMeta}>
+              <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 4 }}>
                 {link.mimeType} • {link.storageSource} • {link.isKosh ? 'Kosh' : 'Standard'}
               </Text>
-              <View style={styles.row}>
+              <View className="flex-row gap-2 mt-4">
                 <Pressable
                   onPress={async () => {
                     await removeGhostLink(link.id);
                   }}
-                  style={styles.removeButton}
+                  className="rounded-pill border px-4 py-2"
+                  style={{ backgroundColor: `${colors.warm500}11`, borderColor: `${colors.warm500}33` }}
                 >
-                  <Text style={styles.removeButtonText}>Remove</Text>
+                  <Text style={{ color: colors.warm300, fontSize: 12, fontWeight: '700' }}>Remove</Text>
                 </Pressable>
 
                 {link.isKosh ? (
@@ -122,9 +135,10 @@ export default function CategoryDetailScreen() {
                       await removeEntry(link.id);
                       await refreshData();
                     }}
-                    style={styles.koshButton}
+                    className="rounded-pill border px-4 py-2"
+                    style={{ backgroundColor: `${colors.tealGlow}11`, borderColor: `${colors.tealGlow}33` }}
                   >
-                    <Text style={styles.koshButtonText}>Remove Kosh</Text>
+                    <Text style={{ color: colors.tealGlow, fontSize: 12, fontWeight: '700' }}>Remove Kosh</Text>
                   </Pressable>
                 ) : (
                   <Pressable
@@ -144,9 +158,10 @@ export default function CategoryDetailScreen() {
                       await addEntry(link.id);
                       await refreshData();
                     }}
-                    style={styles.koshButton}
+                    className="rounded-pill border px-4 py-2"
+                    style={{ backgroundColor: `${colors.tealGlow}11`, borderColor: `${colors.tealGlow}33` }}
                   >
-                    <Text style={styles.koshButtonText}>Move to Kosh</Text>
+                    <Text style={{ color: colors.tealGlow, fontSize: 12, fontWeight: '700' }}>Move to Kosh</Text>
                   </Pressable>
                 )}
               </View>
@@ -154,97 +169,10 @@ export default function CategoryDetailScreen() {
           ))
         )}
 
-        {loading ? <Text style={styles.infoText}>Updating category...</Text> : null}
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        {loading ? <Text style={{ color: colors.textSecondary, fontSize: 12 }}>Updating category...</Text> : null}
+        {error ? <Text style={{ color: colors.danger, fontSize: 12 }}>{error}</Text> : null}
       </ScrollView>
     </AppScreen>
   );
 }
 
-const styles = StyleSheet.create({
-  content: {
-    gap: spacing.md,
-    paddingBottom: spacing.xxl,
-  },
-  header: {
-    gap: 4,
-  },
-  title: {
-    color: colors.textPrimary,
-    fontSize: 24,
-    fontWeight: '800',
-  },
-  subtitle: {
-    color: colors.textSecondary,
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  sectionTitle: {
-    color: colors.textPrimary,
-    fontSize: 15,
-    fontWeight: '700',
-    marginBottom: spacing.sm,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.rim,
-    borderRadius: radius.chip,
-    color: colors.textPrimary,
-    backgroundColor: colors.glass04,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  emptyText: {
-    color: colors.textSecondary,
-    fontSize: 13,
-  },
-  linkTitle: {
-    color: colors.textPrimary,
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  linkMeta: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    marginTop: 4,
-  },
-  row: {
-    marginTop: spacing.sm,
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  removeButton: {
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: 'rgba(255,71,87,0.4)',
-    backgroundColor: 'rgba(255,71,87,0.16)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  removeButtonText: {
-    color: '#FF9EA6',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  koshButton: {
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: 'rgba(0,229,204,0.35)',
-    backgroundColor: 'rgba(0,229,204,0.15)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  koshButtonText: {
-    color: colors.tealGlow,
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  infoText: {
-    color: colors.textSecondary,
-    fontSize: 12,
-  },
-  errorText: {
-    color: colors.danger,
-    fontSize: 12,
-  },
-});

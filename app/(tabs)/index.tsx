@@ -38,6 +38,8 @@ function formatBytes(bytes: number): string {
 
 export default function HomeScreen() {
   const router = useRouter();
+  const theme = useAppStore((state) => state.theme);
+  const colors = theme === 'dark' ? darkColors : lightColors;
 
   const initialized = useFileStore((state) => state.initialized);
   const categories = useFileStore((state) => state.categories);
@@ -56,7 +58,6 @@ export default function HomeScreen() {
     await grantAccess();
     router.push('/(tabs)/explorer');
   };
-
 
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -118,37 +119,38 @@ export default function HomeScreen() {
   };
 
   return (
-    <AppScreen>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName="gap-md pb-xxl">
+    <AppScreen style={{ backgroundColor: colors.void }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 16, paddingBottom: 44 }}>
         {/* Header (with embedded subtitle) */}
         <View className="flex-row justify-between items-start mt-2">
           <Pressable onLongPress={handleSecretGesture} delayLongPress={700} className="flex-1">
-            <Text className="text-textPrimary text-[28px] font-extrabold">Vinyas</Text>
-            <Text className="text-textSecondary text-[13px] leading-[18px] pr-4 mt-1">
+            <Text style={{ color: colors.textPrimary, fontSize: 28, fontWeight: '800' }}>Vinyas</Text>
+            <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 18, paddingRight: 16, marginTop: 4 }}>
               Long-press logo for hidden Kosh entry.
             </Text>
           </Pressable>
           <Pressable
             onPress={() => router.push('/settings')}
-            className="w-10 h-10 rounded-full bg-glass07 items-center justify-center active:bg-glass10"
+            className="w-10 h-10 rounded-full items-center justify-center"
+            style={{ backgroundColor: colors.glass07 }}
           >
             <MaterialIcons name="settings" size={20} color={colors.textSecondary} />
           </Pressable>
         </View>
 
         {/* Stats Row */}
-        <View className="flex-row gap-sm mt-1">
-          <GlassCard className="flex-1">
-            <Text className="text-textTertiary text-[10px] tracking-widest uppercase">Bookmarks</Text>
-            <Text className="text-textPrimary text-[22px] font-extrabold mt-1">{totalBookmarks}</Text>
+        <View className="flex-row gap-3">
+          <GlassCard style={{ flex: 1 }}>
+            <Text style={{ color: colors.textTertiary, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase' }}>Bookmarks</Text>
+            <Text style={{ color: colors.textPrimary, fontSize: 22, fontWeight: '800', marginTop: 4 }}>{totalBookmarks}</Text>
           </GlassCard>
-          <GlassCard className="flex-1">
-            <Text className="text-textTertiary text-[10px] tracking-widest uppercase">Storage</Text>
-            <Text className="text-textPrimary text-[22px] font-extrabold mt-1">{formatBytes(totalStorageBytes)}</Text>
+          <GlassCard style={{ flex: 1 }}>
+            <Text style={{ color: colors.textTertiary, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase' }}>Storage</Text>
+            <Text style={{ color: colors.textPrimary, fontSize: 22, fontWeight: '800', marginTop: 4 }}>{formatBytes(totalStorageBytes)}</Text>
           </GlassCard>
-          <GlassCard className="flex-1">
-            <Text className="text-textTertiary text-[10px] tracking-widest uppercase">Kosh</Text>
-            <Text className="text-textPrimary text-[22px] font-extrabold mt-1">{koshCount}</Text>
+          <GlassCard style={{ flex: 1 }}>
+            <Text style={{ color: colors.textTertiary, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase' }}>Kosh</Text>
+            <Text style={{ color: colors.textPrimary, fontSize: 22, fontWeight: '800', marginTop: 4 }}>{koshCount}</Text>
           </GlassCard>
         </View>
 
@@ -159,33 +161,45 @@ export default function HomeScreen() {
             onChangeText={setSearchQuery}
             placeholder="Search files and categories..."
             placeholderTextColor={colors.textTertiary}
-            className="border border-rim rounded-chip text-textPrimary bg-glass04 px-4 py-3 text-sm"
+            style={{ 
+              borderColor: colors.rim, 
+              borderWidth: 1, 
+              borderRadius: 24, 
+              color: colors.textPrimary, 
+              backgroundColor: colors.glass04,
+              paddingHorizontal: 16,
+              paddingVertical: 12,
+              fontSize: 14
+            }}
           />
         </GlassCard>
 
         {/* Category Grid */}
-        <View className="flex-row flex-wrap gap-sm">
+        <View className="flex-row flex-wrap gap-2 justify-between">
           {filteredCategories.map((cat) => {
             const bookmarkCount = ghostLinks.filter((l) => l.categoryId === cat.id).length;
             const iconName = CATEGORY_ICONS[cat.id] || cat.icon || 'folder';
-            const gradientStart = Array.isArray(cat.gradient) && cat.gradient.length > 0 ? cat.gradient[0] : '#1C2A33';
+            const gradientStart = Array.isArray(cat.gradient) && cat.gradient.length > 0 ? cat.gradient[0] : (theme === 'dark' ? '#1C2A33' : '#E2E8F0');
             return (
               <Pressable
                 key={cat.id}
                 onPress={() => router.push({ pathname: '/category/[id]' as never, params: { id: cat.id } })}
-                className="w-[48%] active:opacity-80"
+                style={({ pressed }) => ({
+                  width: '48%',
+                  opacity: pressed ? 0.8 : 1,
+                  borderRadius: 16,
+                  padding: 16,
+                  minHeight: 100,
+                  justifyContent: 'space-between',
+                  backgroundColor: `${gradientStart}22`,
+                  borderWidth: 1,
+                  borderColor: `${gradientStart}44`
+                })}
               >
-                <View
-                  className="rounded-[16px] p-4 min-h-[95px] justify-between"
-                  style={{ backgroundColor: `${gradientStart}22`, borderWidth: 1, borderColor: `${gradientStart}44` }}
-                >
-                  <MaterialIcons name={iconName as any} size={28} color={gradientStart} />
-                  <View className="mt-3 flex-row items-center justify-between">
-                    <View>
-                      <Text className="text-textPrimary text-[15px] font-bold">{cat.name}</Text>
-                      <Text className="text-textSecondary text-[11px] mt-0.5">{bookmarkCount} items</Text>
-                    </View>
-                  </View>
+                <MaterialIcons name={iconName as any} size={28} color={gradientStart} />
+                <View className="mt-3">
+                  <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: '700' }}>{cat.name}</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 11, marginTop: 2 }}>{bookmarkCount} items</Text>
                 </View>
               </Pressable>
             );
@@ -193,18 +207,22 @@ export default function HomeScreen() {
         </View>
 
         {/* Storage Locations (Files by Google Style) */}
-        <GlassCard className="mt-2">
-          <Text className="text-textPrimary text-[15px] font-bold mb-sm">Storage devices</Text>
+        <GlassCard style={{ marginTop: 8 }}>
+          <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: '700', marginBottom: 12 }}>Storage devices</Text>
           <View className="gap-[2px]">
             <Pressable
               onPress={handleStoragePress}
-              className="flex-row items-center justify-between bg-glass04 px-4 py-3 rounded-t-chip border border-rim active:bg-glass07"
+              className="flex-row items-center justify-between px-4 py-3 rounded-t-chip border"
+              style={({ pressed }) => ({
+                backgroundColor: pressed ? colors.glass07 : colors.glass04,
+                borderColor: colors.rim,
+              })}
             >
               <View className="flex-row items-center gap-3">
                 <MaterialIcons name="smartphone" size={24} color={colors.warm300} />
                 <View>
-                  <Text className="text-textPrimary font-semibold text-[14px]">Internal Storage</Text>
-                  <Text className="text-textSecondary text-[11px] mt-[2px]">Emulated device storage</Text>
+                  <Text style={{ color: colors.textPrimary, fontWeight: '600', fontSize: 14 }}>Internal Storage</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 11, marginTop: 2 }}>Full path access</Text>
                 </View>
               </View>
               <MaterialIcons name="chevron-right" size={20} color={colors.textTertiary} />
@@ -212,13 +230,17 @@ export default function HomeScreen() {
             
             <Pressable
               onPress={handleStoragePress}
-              className="flex-row items-center justify-between bg-glass04 px-4 py-3 rounded-b-chip border border-rim active:bg-glass07"
+              className="flex-row items-center justify-between px-4 py-3 rounded-b-chip border"
+              style={({ pressed }) => ({
+                backgroundColor: pressed ? colors.glass07 : colors.glass04,
+                borderColor: colors.rim,
+              })}
             >
               <View className="flex-row items-center gap-3">
                 <MaterialIcons name="sd-storage" size={24} color={colors.warm300} />
                 <View>
-                  <Text className="text-textPrimary font-semibold text-[14px]">SD Card</Text>
-                  <Text className="text-textSecondary text-[11px] mt-[2px]">External volume</Text>
+                  <Text style={{ color: colors.textPrimary, fontWeight: '600', fontSize: 14 }}>SD Card / OTG</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 11, marginTop: 2 }}>External volumes</Text>
                 </View>
               </View>
               <MaterialIcons name="chevron-right" size={20} color={colors.textTertiary} />
@@ -228,25 +250,31 @@ export default function HomeScreen() {
 
         {/* Recent Activity (Google Files Inspired) */}
         {recentLinks.length > 0 && (
-          <View className="mt-2 mb-sm">
-            <Text className="text-textPrimary text-[15px] font-bold mb-sm px-1">Recent files</Text>
+          <View style={{ marginTop: 8, marginBottom: 12 }}>
+            <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: '700', marginBottom: 12, paddingHorizontal: 4 }}>Recent files</Text>
             <FlatList
               data={recentLinks}
               horizontal
               showsHorizontalScrollIndicator={false}
               keyExtractor={(item) => item.id}
-              contentContainerClassName="gap-sm py-1"
+              contentContainerStyle={{ gap: 12, paddingVertical: 4 }}
               renderItem={({ item }) => (
                 <Pressable
-                  className="bg-glass04 border border-rim rounded-card p-3 w-[140px] h-[100px] justify-between active:bg-glass07"
+                  className="border rounded-xl p-3 justify-between"
+                  style={({ pressed }) => ({
+                    backgroundColor: pressed ? colors.glass07 : colors.glass04,
+                    borderColor: colors.rim,
+                    width: 140,
+                    height: 100
+                  })}
                   onPress={() => router.push('/(tabs)/explorer')}
                 >
                   <View className="flex-row justify-between items-start">
                     <MaterialIcons name="insert-drive-file" size={24} color={colors.warm300} />
                   </View>
                   <View>
-                    <Text numberOfLines={1} className="text-textPrimary text-[13px] font-semibold">{item.fileName}</Text>
-                    <Text className="text-textSecondary text-[10px] mt-1">{formatBytes(item.fileSize || 0)}</Text>
+                    <Text numberOfLines={1} style={{ color: colors.textPrimary, fontSize: 13, fontWeight: '600' }}>{item.fileName}</Text>
+                    <Text style={{ color: colors.textSecondary, fontSize: 10, marginTop: 4 }}>{formatBytes(item.fileSize || 0)}</Text>
                   </View>
                 </Pressable>
               )}
