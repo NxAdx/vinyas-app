@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import { create } from 'zustand';
 
 interface AuthState {
@@ -20,7 +20,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     initialize: async () => {
         try {
-            const storedPin = await AsyncStorage.getItem(PIN_STORAGE_KEY);
+            const storedPin = await SecureStore.getItemAsync(PIN_STORAGE_KEY);
             set({ hasPin: !!storedPin, isAuthenticated: !storedPin });
             // If no PIN is configured, they are "authenticated" by default until they set one
         } catch (e) {
@@ -30,7 +30,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     setPin: async (pin: string) => {
         try {
-            await AsyncStorage.setItem(PIN_STORAGE_KEY, pin);
+            await SecureStore.setItemAsync(PIN_STORAGE_KEY, pin);
             set({ hasPin: true, isAuthenticated: true });
             return true;
         } catch (e) {
@@ -40,7 +40,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     verifyPin: async (pin: string) => {
         try {
-            const storedPin = await AsyncStorage.getItem(PIN_STORAGE_KEY);
+            const storedPin = await SecureStore.getItemAsync(PIN_STORAGE_KEY);
             if (storedPin === pin) {
                 set({ isAuthenticated: true });
                 return true;
@@ -53,7 +53,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     clearPin: async () => {
         try {
-            await AsyncStorage.removeItem(PIN_STORAGE_KEY);
+            await SecureStore.deleteItemAsync(PIN_STORAGE_KEY);
             set({ hasPin: false, isAuthenticated: true });
         } catch (e) {
             console.error('Failed to clear PIN', e);

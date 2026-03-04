@@ -56,7 +56,8 @@
           "photosPermission": "Allow $(PRODUCT_NAME) to access your media to organize your private Ghost Bookmarks.",
           "savePhotosPermission": "Allow $(PRODUCT_NAME) to save edits to your media."
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "updates": {
       "url": "https://u.expo.dev/YOUR-PROJECT-ID",
