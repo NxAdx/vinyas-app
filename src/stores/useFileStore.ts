@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Category, GhostLink, ExplorerFileItem } from '../types';
+import type { Category, GhostLink, ExplorerFileItem, StorageSourceType } from '../types';
 
 interface FileState {
   initialized: boolean;
@@ -8,6 +8,7 @@ interface FileState {
   categories: Category[];
   ghostLinks: GhostLink[];
   explorerFiles: ExplorerFileItem[];
+  storageSources: { type: StorageSourceType; isConnected: boolean }[];
   selectedCategoryId: string | null;
   
   initialize: () => Promise<void>;
@@ -24,6 +25,11 @@ export const useFileStore = create<FileState>((set, get) => ({
   loading: false,
   error: null,
   selectedCategoryId: null,
+  storageSources: [
+    { type: 'internal', isConnected: true },
+    { type: 'sd_card', isConnected: false },
+    { type: 'usb_otg', isConnected: false }
+  ],
   categories: [
     {
       id: 'cat-doc',

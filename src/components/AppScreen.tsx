@@ -1,5 +1,6 @@
 import { PropsWithChildren } from 'react';
-import { SafeAreaView, StyleSheet, View, type ViewStyle } from 'react-native';
+import { StyleSheet, View, type ViewStyle } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { colors, spacing } from '@/src/theme/tokens';
 
@@ -10,7 +11,7 @@ interface AppScreenProps extends PropsWithChildren {
 
 export function AppScreen({ children, padded = true, style }: AppScreenProps) {
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={[styles.container, padded ? styles.padded : undefined, style]}>{children}</View>
     </SafeAreaView>
   );

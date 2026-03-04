@@ -117,7 +117,11 @@ export default function HomeScreen() {
           Long-press logo for hidden Kosh entry. Current mode: {globalMode.toUpperCase()}
         </Text>
 
-        <View style={styles.metricsRow}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.metricsRow}
+        >
           <GlassCard style={styles.metricCard} highlighted={globalMode === 'warm'}>
             <Text style={styles.metricLabel}>Bookmarks</Text>
             <Text style={styles.metricValue}>{ghostLinks.length}</Text>
@@ -130,7 +134,7 @@ export default function HomeScreen() {
             <Text style={styles.metricLabel}>Kosh</Text>
             <Text style={styles.metricValue}>{ghostLinks.filter((link) => link.isKosh).length}</Text>
           </GlassCard>
-        </View>
+        </ScrollView>
 
         <GlassCard>
           <Text style={styles.sectionTitle}>Find categories</Text>
@@ -246,11 +250,11 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   },
   metricsRow: {
-    flexDirection: 'row',
     gap: spacing.sm,
+    paddingVertical: spacing.xs,
   },
   metricCard: {
-    flex: 1,
+    minWidth: 120,
     padding: spacing.md,
   },
   metricLabel: {

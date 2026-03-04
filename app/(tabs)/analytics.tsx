@@ -66,7 +66,11 @@ export default function AnalyticsScreen() {
           <Text style={styles.subtitle}>Local-only usage summary from your ghost bookmarks.</Text>
         </View>
 
-        <View style={styles.metricsRow}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.metricsRow}
+        >
           <GlassCard style={styles.metricCard}>
             <Text style={styles.metricLabel}>Bookmarks</Text>
             <Text style={styles.metricValue}>{summary?.totalBookmarks ?? ghostLinks.length}</Text>
@@ -75,7 +79,7 @@ export default function AnalyticsScreen() {
             <Text style={styles.metricLabel}>Kosh</Text>
             <Text style={styles.metricValue}>{summary?.vaultBookmarks ?? 0}</Text>
           </GlassCard>
-        </View>
+        </ScrollView>
 
         <GlassCard>
           <Text style={styles.sectionTitle}>Total bookmarked size</Text>
@@ -148,11 +152,12 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   },
   metricsRow: {
-    flexDirection: 'row',
     gap: spacing.sm,
+    paddingVertical: spacing.sm,
   },
   metricCard: {
-    flex: 1,
+    minWidth: 120,
+    padding: spacing.md,
   },
   metricLabel: {
     color: colors.textTertiary,
