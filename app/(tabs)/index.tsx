@@ -62,6 +62,15 @@ export default function HomeScreen() {
   };
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [didAutoPrompt, setDidAutoPrompt] = useState(false);
+
+  // Auto prompt for storage on first load if missing
+  useEffect(() => {
+    if (initialized && !hasStoragePermission && !didAutoPrompt) {
+      setDidAutoPrompt(true);
+      grantAccess();
+    }
+  }, [initialized, hasStoragePermission, didAutoPrompt, grantAccess]);
 
   // We explicitly inject "Other" into the UI render array without modifying the database yet
   const displayCategories = useMemo(() => {
@@ -120,6 +129,7 @@ export default function HomeScreen() {
   const totalBookmarks = ghostLinks.length;
   const totalStorageBytes = ghostLinks.reduce((sum, link) => sum + (link.fileSize || 0), 0);
   const koshCount = ghostLinks.filter((link) => link.isKosh).length;
+  const hasSdCard = ghostLinks.some((link) => link.storageSource === 'sd_card');
 
   const filteredCategories = useMemo(() => {
     if (!searchQuery.trim()) return displayCategories;
@@ -166,27 +176,6 @@ const CAT_COLORS: Record<string, string> = {
             <MaterialIcons name="settings" size={22} color={colors.textSecondary} />
           </Pressable>
         </View>
-
-        {/* Permission Banner */}
-        {!hasStoragePermission && (
-          <Pressable
-            onPress={grantAccess}
-            className="flex-row items-center gap-3 p-4 rounded-card border"
-            style={({ pressed }) => ({
-              backgroundColor: pressed ? colors.glass10 : colors.glass07,
-              borderColor: colors.tealGlow + '40', // slightly transparent teal border
-            })}
-          >
-            <View style={{ backgroundColor: colors.tealGlow + '20', padding: 8, borderRadius: 12 }}>
-              <MaterialIcons name="folder-copy" size={24} color={colors.tealGlow} />
-            </View>
-            <View className="flex-1">
-              <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: 'bold' }}>Storage Access Required</Text>
-              <Text style={{ color: colors.textSecondary, fontSize: 13, marginTop: 2 }}>Tap to grant Vinyas permission to manage your files.</Text>
-            </View>
-            <MaterialIcons name="chevron-right" size={24} color={colors.textSecondary} />
-          </Pressable>
-        )}
 
         {/* Stats Row */}
         <View className="flex-row gap-3">
@@ -264,22 +253,25 @@ const CAT_COLORS: Record<string, string> = {
               <MaterialIcons name="chevron-right" size={20} color={colors.textSecondary} />
             </Pressable>
 
-            <Pressable
-              onPress={handleStoragePress}
-              className="flex-row items-center justify-between px-5 py-4"
-              style={({ pressed }) => ({
-                backgroundColor: pressed ? colors.glass07 : 'transparent',
-              })}
-            >
-              <View className="flex-row items-center gap-4">
-                <MaterialIcons name="sd-storage" size={24} color={colors.textSecondary} />
-                <View>
-                  <Text style={{ color: colors.textPrimary, fontWeight: '600', fontSize: 15 }}>SD Card</Text>
-                  <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }}>External volume</Text>
+            {hasSdCard && (
+              <Pressable
+                onPress={handleStoragePress}
+                className="flex-row items-center justify-between px-5 py-4 border-t"
+                style={({ pressed }) => ({
+                  backgroundColor: pressed ? colors.glass07 : 'transparent',
+                  borderColor: colors.rim,
+                })}
+              >
+                <View className="flex-row items-center gap-4">
+                  <MaterialIcons name="sd-storage" size={24} color={colors.textSecondary} />
+                  <View>
+                    <Text style={{ color: colors.textPrimary, fontWeight: '600', fontSize: 15 }}>SD Card</Text>
+                    <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }}>External volume attached</Text>
+                  </View>
                 </View>
-              </View>
-              <MaterialIcons name="chevron-right" size={20} color={colors.textSecondary} />
-            </Pressable>
+                <MaterialIcons name="chevron-right" size={20} color={colors.textSecondary} />
+              </Pressable>
+            )}
           </View>
         </View>
 

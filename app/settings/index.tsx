@@ -48,6 +48,8 @@ export default function SettingsScreen() {
   const colors = theme === 'dark' ? THEME_DARK : THEME_LIGHT;
 
   const loading = useFileStore((state) => state.loading);
+  const hasStoragePermission = useFileStore((state) => state.hasStoragePermission);
+  const grantAccess = useFileStore((state) => state.grantAccess);
   const resetAllData = useFileStore((state) => state.resetAllData);
   const refreshData = useFileStore((state) => state.refreshData);
   const refreshExplorer = useFileStore((state) => state.refreshExplorer);
@@ -197,6 +199,28 @@ export default function SettingsScreen() {
               </Pressable>
             )}
           </View>
+        </GlassCard>
+
+        {/* Storage Access */}
+        <GlassCard>
+          <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: 'bold', marginBottom: 8 }}>Storage Access</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.rim, marginBottom: 8 }}>
+            <Text style={{ color: colors.textSecondary, fontSize: 12 }}>Device Files</Text>
+            <Text style={{ color: colors.textPrimary, fontSize: 12, fontWeight: 'bold' }}>{hasStoragePermission ? 'Granted' : 'Missing'}</Text>
+          </View>
+          <Text style={{ color: colors.textSecondary, fontSize: 13, marginBottom: 12 }}>
+            Manage permission to scan documents and media directories across your device storage.
+          </Text>
+          <Pressable
+            onPress={() => grantAccess()}
+            className="border rounded-pill py-2.5 items-center"
+            style={({ pressed }) => ({
+              backgroundColor: pressed ? colors.glass10 : colors.glass07,
+              borderColor: colors.rim
+            })}
+          >
+            <Text style={{ color: colors.textPrimary, fontWeight: 'bold', fontSize: 13 }}>{hasStoragePermission ? 'Refresh Access' : 'Request Access'}</Text>
+          </Pressable>
         </GlassCard>
 
         {/* OTA Updates */}
