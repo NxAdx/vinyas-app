@@ -136,163 +136,164 @@ export default function HomeScreen() {
     router.push('/(tabs)/vault');
   };
 
+const CAT_COLORS: Record<string, string> = {
+    'cat-img': '#4299E1', // Blue
+    'cat-doc': '#F56565', // Red
+    'cat-vid': '#48BB78', // Green
+    'cat-aud': '#9F7AEA', // Purple
+    'cat-apk': '#ED8936', // Orange
+    'cat-other': '#A0AEC0', // Gray
+  };
+
   return (
     <AppScreen style={{ backgroundColor: colors.void }}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 16, paddingBottom: 44 }}>
-        {/* Header (with embedded subtitle) */}
-        <View className="flex-row justify-between items-start mt-2">
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 16, paddingBottom: 44, paddingHorizontal: 16 }}>
+        
+        {/* Header */}
+        <View className="flex-row justify-between items-start mt-4">
           <Pressable onLongPress={handleSecretGesture} delayLongPress={700} className="flex-1">
-            <Text style={{ color: colors.textPrimary, fontSize: 28, fontWeight: '800' }}>Vinyas</Text>
-            <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 18, paddingRight: 16, marginTop: 4 }}>
+            <Text style={{ color: colors.textPrimary, fontSize: 32, fontWeight: '800' }}>Vinyas</Text>
+            <Text style={{ color: colors.textSecondary, fontSize: 14, marginTop: 4 }}>
               Long-press logo for hidden Kosh entry.
             </Text>
           </Pressable>
           <Pressable
             onPress={() => router.push('/settings')}
-            className="w-10 h-10 rounded-full items-center justify-center"
+            className="w-10 h-10 rounded-full items-center justify-center mt-1"
             style={{ backgroundColor: colors.glass07 }}
           >
-            <MaterialIcons name="settings" size={20} color={colors.textSecondary} />
+            <MaterialIcons name="settings" size={22} color={colors.textSecondary} />
           </Pressable>
         </View>
 
         {/* Stats Row */}
         <View className="flex-row gap-3">
-          <GlassCard style={{ flex: 1 }}>
-            <Text style={{ color: colors.textTertiary, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase' }}>Bookmarks</Text>
-            <Text style={{ color: colors.textPrimary, fontSize: 22, fontWeight: '800', marginTop: 4 }}>{totalBookmarks}</Text>
-          </GlassCard>
-          <GlassCard style={{ flex: 1 }}>
-            <Text style={{ color: colors.textTertiary, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase' }}>Storage</Text>
-            <Text style={{ color: colors.textPrimary, fontSize: 22, fontWeight: '800', marginTop: 4 }}>{formatBytes(totalStorageBytes)}</Text>
-          </GlassCard>
-          <GlassCard style={{ flex: 1 }}>
-            <Text style={{ color: colors.textTertiary, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase' }}>Kosh</Text>
-            <Text style={{ color: colors.textPrimary, fontSize: 22, fontWeight: '800', marginTop: 4 }}>{koshCount}</Text>
-          </GlassCard>
+          <View style={{ flex: 1, backgroundColor: colors.glass04, borderRadius: 20, padding: 12, borderWidth: 1, borderColor: colors.rim }}>
+            <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase' }}>Bookmarks</Text>
+            <Text style={{ color: colors.textPrimary, fontSize: 24, fontWeight: '800', marginTop: 6 }} numberOfLines={1} adjustsFontSizeToFit>{totalBookmarks}</Text>
+          </View>
+          <View style={{ flex: 1, backgroundColor: colors.glass04, borderRadius: 20, padding: 12, borderWidth: 1, borderColor: colors.rim }}>
+            <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase' }}>Storage</Text>
+            <Text style={{ color: colors.textPrimary, fontSize: 24, fontWeight: '800', marginTop: 6 }} numberOfLines={1} adjustsFontSizeToFit>{formatBytes(totalStorageBytes)}</Text>
+          </View>
+          <View style={{ flex: 1, backgroundColor: colors.glass04, borderRadius: 20, padding: 12, borderWidth: 1, borderColor: colors.rim }}>
+            <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase' }}>Kosh</Text>
+            <Text style={{ color: colors.textPrimary, fontSize: 24, fontWeight: '800', marginTop: 6 }} numberOfLines={1} adjustsFontSizeToFit>{koshCount}</Text>
+          </View>
         </View>
 
         {/* Search */}
-        <GlassCard>
+        <View style={{ backgroundColor: colors.glass04, borderRadius: 999, borderWidth: 1, borderColor: colors.rim, paddingHorizontal: 16, paddingVertical: 14 }}>
           <TextInput
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholder="Search files and categories..."
-            placeholderTextColor={colors.textTertiary}
-            style={{
-              borderColor: colors.rim,
-              borderWidth: 1,
-              borderRadius: 24,
-              color: colors.textPrimary,
-              backgroundColor: colors.glass04,
-              paddingHorizontal: 16,
-              paddingVertical: 12,
-              fontSize: 14
-            }}
+            placeholderTextColor={colors.textSecondary}
+            style={{ color: colors.textPrimary, fontSize: 15 }}
           />
-        </GlassCard>
+        </View>
 
         {/* Category Grid */}
-        <View className="flex-row flex-wrap gap-2 justify-between">
+        <View className="flex-row flex-wrap gap-y-3 justify-between">
           {filteredCategories.map((cat) => {
             const bookmarkCount = ghostLinks.filter((l) => l.categoryId === cat.id).length;
             const iconName = CATEGORY_ICONS[cat.id] || cat.icon || 'folder';
-            const gradientStart = Array.isArray(cat.gradient) && cat.gradient.length > 0 ? cat.gradient[0] : (theme === 'dark' ? '#1C2A33' : '#E2E8F0');
+            const catColor = CAT_COLORS[cat.id] || '#A0AEC0';
+            
             return (
               <Pressable
                 key={cat.id}
                 onPress={() => router.push({ pathname: '/category/[id]' as never, params: { id: cat.id } })}
                 style={({ pressed }) => ({
                   width: '48%',
-                  opacity: pressed ? 0.8 : 1,
-                  borderRadius: 16,
-                  padding: 16,
-                  minHeight: 100,
+                  opacity: pressed ? 0.7 : 1,
+                  borderRadius: 24,
+                  padding: 18,
+                  minHeight: 120,
                   justifyContent: 'space-between',
-                  backgroundColor: `${gradientStart}22`,
+                  backgroundColor: `${catColor}10`, // VERY subtle background
                   borderWidth: 1,
-                  borderColor: `${gradientStart}44`
+                  borderColor: `${catColor}20` // Subtle border
                 })}
               >
-                <MaterialIcons name={iconName as any} size={28} color={gradientStart} />
-                <View className="mt-3">
-                  <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: '700' }}>{cat.name}</Text>
-                  <Text style={{ color: colors.textSecondary, fontSize: 11, marginTop: 2 }}>{bookmarkCount} items</Text>
+                <MaterialIcons name={iconName as any} size={32} color={catColor} />
+                <View className="mt-4">
+                  <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '700' }}>{cat.name}</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }}>{bookmarkCount} items</Text>
                 </View>
               </Pressable>
             );
           })}
         </View>
 
-        {/* Storage Locations (Files by Google Style) */}
-        <GlassCard style={{ marginTop: 8 }}>
-          <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: '700', marginBottom: 12 }}>Storage devices</Text>
-          <View className="gap-[2px]">
+        {/* Storage Locations */}
+        <View style={{ marginTop: 12 }}>
+          <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 12, marginLeft: 4 }}>Storage devices</Text>
+          <View style={{ backgroundColor: colors.glass04, borderRadius: 24, borderWidth: 1, borderColor: colors.rim, overflow: 'hidden' }}>
             <Pressable
               onPress={handleStoragePress}
-              className="flex-row items-center justify-between px-4 py-3 rounded-t-chip border"
+              className="flex-row items-center justify-between px-5 py-4 border-b"
               style={({ pressed }) => ({
-                backgroundColor: pressed ? colors.glass07 : colors.glass04,
+                backgroundColor: pressed ? colors.glass07 : 'transparent',
                 borderColor: colors.rim,
               })}
             >
-              <View className="flex-row items-center gap-3">
-                <MaterialIcons name="smartphone" size={24} color={colors.warm300} />
+              <View className="flex-row items-center gap-4">
+                <MaterialIcons name="smartphone" size={24} color={colors.textSecondary} />
                 <View>
-                  <Text style={{ color: colors.textPrimary, fontWeight: '600', fontSize: 14 }}>Internal Storage</Text>
-                  <Text style={{ color: colors.textSecondary, fontSize: 11, marginTop: 2 }}>Full path access</Text>
+                  <Text style={{ color: colors.textPrimary, fontWeight: '600', fontSize: 15 }}>Internal Storage</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }}>Emulated device storage</Text>
                 </View>
               </View>
-              <MaterialIcons name="chevron-right" size={20} color={colors.textTertiary} />
+              <MaterialIcons name="chevron-right" size={20} color={colors.textSecondary} />
             </Pressable>
 
             <Pressable
               onPress={handleStoragePress}
-              className="flex-row items-center justify-between px-4 py-3 rounded-b-chip border"
+              className="flex-row items-center justify-between px-5 py-4"
               style={({ pressed }) => ({
-                backgroundColor: pressed ? colors.glass07 : colors.glass04,
-                borderColor: colors.rim,
+                backgroundColor: pressed ? colors.glass07 : 'transparent',
               })}
             >
-              <View className="flex-row items-center gap-3">
-                <MaterialIcons name="sd-storage" size={24} color={colors.warm300} />
+              <View className="flex-row items-center gap-4">
+                <MaterialIcons name="sd-storage" size={24} color={colors.textSecondary} />
                 <View>
-                  <Text style={{ color: colors.textPrimary, fontWeight: '600', fontSize: 14 }}>SD Card / OTG</Text>
-                  <Text style={{ color: colors.textSecondary, fontSize: 11, marginTop: 2 }}>External volumes</Text>
+                  <Text style={{ color: colors.textPrimary, fontWeight: '600', fontSize: 15 }}>SD Card</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }}>External volume</Text>
                 </View>
               </View>
-              <MaterialIcons name="chevron-right" size={20} color={colors.textTertiary} />
+              <MaterialIcons name="chevron-right" size={20} color={colors.textSecondary} />
             </Pressable>
           </View>
-        </GlassCard>
+        </View>
 
-        {/* Recent Activity (Google Files Inspired) */}
+        {/* Recent Activity */}
         {recentLinks.length > 0 && (
-          <View style={{ marginTop: 8, marginBottom: 12 }}>
-            <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: '700', marginBottom: 12, paddingHorizontal: 4 }}>Recent files</Text>
+          <View style={{ marginTop: 16 }}>
+            <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 12, paddingHorizontal: 4 }}>Recent files</Text>
             <FlatList
               data={recentLinks}
               horizontal
               showsHorizontalScrollIndicator={false}
               keyExtractor={(item) => item.id}
-              contentContainerStyle={{ gap: 12, paddingVertical: 4 }}
+              contentContainerStyle={{ gap: 12, paddingHorizontal: 4 }}
               renderItem={({ item }) => (
                 <Pressable
-                  className="border rounded-xl p-3 justify-between"
+                  className="border rounded-2xl p-4 justify-between"
                   style={({ pressed }) => ({
                     backgroundColor: pressed ? colors.glass07 : colors.glass04,
                     borderColor: colors.rim,
-                    width: 140,
-                    height: 100
+                    width: 150,
+                    height: 110
                   })}
                   onPress={() => router.push('/(tabs)/explorer')}
                 >
                   <View className="flex-row justify-between items-start">
-                    <MaterialIcons name="insert-drive-file" size={24} color={colors.warm300} />
+                    <MaterialIcons name="insert-drive-file" size={28} color={colors.warm300} />
                   </View>
                   <View>
-                    <Text numberOfLines={1} style={{ color: colors.textPrimary, fontSize: 13, fontWeight: '600' }}>{item.fileName}</Text>
-                    <Text style={{ color: colors.textSecondary, fontSize: 10, marginTop: 4 }}>{formatBytes(item.fileSize || 0)}</Text>
+                    <Text numberOfLines={1} style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '600' }}>{item.fileName}</Text>
+                    <Text style={{ color: colors.textSecondary, fontSize: 11, marginTop: 4 }}>{formatBytes(item.fileSize || 0)}</Text>
                   </View>
                 </Pressable>
               )}
