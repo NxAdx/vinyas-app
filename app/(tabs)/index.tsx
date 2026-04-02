@@ -168,22 +168,22 @@ const CAT_COLORS: Record<string, string> = {
 
         {/* Stats Row */}
         <View className="flex-row gap-3">
-          <View style={{ flex: 1, backgroundColor: colors.glass04, borderRadius: 20, padding: 12, borderWidth: 1, borderColor: colors.rim }}>
+          <View style={{ flex: 1, backgroundColor: 'transparent', borderRadius: 20, padding: 12, borderWidth: 1, borderColor: colors.rim }}>
             <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase' }}>Bookmarks</Text>
             <Text style={{ color: colors.textPrimary, fontSize: 24, fontWeight: '800', marginTop: 6 }} numberOfLines={1} adjustsFontSizeToFit>{totalBookmarks}</Text>
           </View>
-          <View style={{ flex: 1, backgroundColor: colors.glass04, borderRadius: 20, padding: 12, borderWidth: 1, borderColor: colors.rim }}>
+          <View style={{ flex: 1, backgroundColor: 'transparent', borderRadius: 20, padding: 12, borderWidth: 1, borderColor: colors.rim }}>
             <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase' }}>Storage</Text>
             <Text style={{ color: colors.textPrimary, fontSize: 24, fontWeight: '800', marginTop: 6 }} numberOfLines={1} adjustsFontSizeToFit>{formatBytes(totalStorageBytes)}</Text>
           </View>
-          <View style={{ flex: 1, backgroundColor: colors.glass04, borderRadius: 20, padding: 12, borderWidth: 1, borderColor: colors.rim }}>
+          <View style={{ flex: 1, backgroundColor: 'transparent', borderRadius: 20, padding: 12, borderWidth: 1, borderColor: colors.rim }}>
             <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase' }}>Kosh</Text>
             <Text style={{ color: colors.textPrimary, fontSize: 24, fontWeight: '800', marginTop: 6 }} numberOfLines={1} adjustsFontSizeToFit>{koshCount}</Text>
           </View>
         </View>
 
         {/* Search */}
-        <View style={{ backgroundColor: colors.glass04, borderRadius: 999, borderWidth: 1, borderColor: colors.rim, paddingHorizontal: 16, paddingVertical: 14 }}>
+        <View style={{ backgroundColor: 'transparent', borderRadius: 999, borderWidth: 1, borderColor: colors.rim, paddingHorizontal: 16, paddingVertical: 14 }}>
           <TextInput
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -194,7 +194,7 @@ const CAT_COLORS: Record<string, string> = {
         </View>
 
         {/* Category Grid */}
-        <View className="flex-row flex-wrap gap-y-3 justify-between">
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: 28, columnGap: 12 }}>
           {filteredCategories.map((cat) => {
             const bookmarkCount = ghostLinks.filter((l) => l.categoryId === cat.id).length;
             const iconName = CATEGORY_ICONS[cat.id] || cat.icon || 'folder';
@@ -205,21 +205,15 @@ const CAT_COLORS: Record<string, string> = {
                 key={cat.id}
                 onPress={() => router.push({ pathname: '/category/[id]' as never, params: { id: cat.id } })}
                 style={({ pressed }) => ({
-                  width: '48%',
+                  width: '18%', // Fits ~5 items per row with gaps
                   opacity: pressed ? 0.7 : 1,
-                  borderRadius: 24,
-                  padding: 18,
-                  minHeight: 120,
-                  justifyContent: 'space-between',
-                  backgroundColor: `${catColor}10`, // VERY subtle background
-                  borderWidth: 1,
-                  borderColor: `${catColor}20` // Subtle border
+                  alignItems: 'flex-start',
                 })}
               >
-                <MaterialIcons name={iconName as any} size={32} color={catColor} />
-                <View className="mt-4">
-                  <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '700' }}>{cat.name}</Text>
-                  <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }}>{bookmarkCount} items</Text>
+                <MaterialIcons name={iconName as any} size={30} color={catColor} />
+                <View className="mt-3">
+                  <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '700' }} numberOfLines={1} adjustsFontSizeToFit>{cat.name}</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 11, marginTop: 2 }}>{bookmarkCount} items</Text>
                 </View>
               </Pressable>
             );
