@@ -45,6 +45,7 @@ export default function HomeScreen() {
   const initialized = useFileStore((state) => state.initialized);
   const categories = useFileStore((state) => state.categories);
   const ghostLinks = useFileStore((state) => state.ghostLinks);
+  const hasStoragePermission = useFileStore((state) => state.hasStoragePermission);
   const initialize = useFileStore((state) => state.initialize);
   const grantAccess = useFileStore((state) => state.grantAccess);
 
@@ -165,6 +166,27 @@ const CAT_COLORS: Record<string, string> = {
             <MaterialIcons name="settings" size={22} color={colors.textSecondary} />
           </Pressable>
         </View>
+
+        {/* Permission Banner */}
+        {!hasStoragePermission && (
+          <Pressable
+            onPress={grantAccess}
+            className="flex-row items-center gap-3 p-4 rounded-card border"
+            style={({ pressed }) => ({
+              backgroundColor: pressed ? colors.glass10 : colors.glass07,
+              borderColor: colors.tealGlow + '40', // slightly transparent teal border
+            })}
+          >
+            <View style={{ backgroundColor: colors.tealGlow + '20', padding: 8, borderRadius: 12 }}>
+              <MaterialIcons name="folder-copy" size={24} color={colors.tealGlow} />
+            </View>
+            <View className="flex-1">
+              <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: 'bold' }}>Storage Access Required</Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 13, marginTop: 2 }}>Tap to grant Vinyas permission to manage your files.</Text>
+            </View>
+            <MaterialIcons name="chevron-right" size={24} color={colors.textSecondary} />
+          </Pressable>
+        )}
 
         {/* Stats Row */}
         <View className="flex-row gap-3">

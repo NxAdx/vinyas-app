@@ -152,10 +152,10 @@ export default function SettingsScreen() {
 
         {/* Security / PIN */}
         <GlassCard>
-          <Text className="text-textPrimary text-[15px] font-bold mb-sm">Security</Text>
-          <View className="flex-row justify-between py-2 border-b border-rim">
-            <Text className="text-textSecondary text-xs">Master PIN</Text>
-            <Text className="text-textPrimary text-xs font-bold">{hasPin ? 'Enabled' : 'Not Set'}</Text>
+          <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: 'bold', marginBottom: 8 }}>Security</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.rim }}>
+            <Text style={{ color: colors.textSecondary, fontSize: 12 }}>Master PIN</Text>
+            <Text style={{ color: colors.textPrimary, fontSize: 12, fontWeight: 'bold' }}>{hasPin ? 'Enabled' : 'Not Set'}</Text>
           </View>
           <View className="flex-row gap-sm mt-sm">
             {hasPin ? (
@@ -176,17 +176,24 @@ export default function SettingsScreen() {
                     logout();
                     Alert.alert('Security Locked', 'Vinyas is now locked. Re-enter your PIN to continue.');
                   }}
-                  className="flex-1 rounded-pill border border-rim bg-glass07 py-2.5 items-center active:bg-glass10"
+                  className="flex-1 rounded-pill border py-2.5 items-center"
+                  style={({ pressed }) => ({
+                    backgroundColor: pressed ? colors.glass10 : colors.glass07,
+                    borderColor: colors.rim
+                  })}
                 >
-                  <Text className="text-textPrimary text-xs font-bold">Lock Now</Text>
+                  <Text style={{ color: colors.textPrimary, fontSize: 12, fontWeight: 'bold' }}>Lock Now</Text>
                 </Pressable>
               </>
             ) : (
               <Pressable
                 onPress={handleSetPin}
-                className="flex-1 bg-warm500 rounded-pill py-2.5 items-center active:bg-warm300"
+                className="flex-1 rounded-pill py-2.5 items-center"
+                style={({ pressed }) => ({
+                  backgroundColor: pressed ? colors.warm300 : colors.warm500
+                })}
               >
-                <Text className="text-void text-xs font-bold">Set Master PIN</Text>
+                <Text style={{ color: colors.void, fontSize: 12, fontWeight: 'bold' }}>Set Master PIN</Text>
               </Pressable>
             )}
           </View>
@@ -194,15 +201,19 @@ export default function SettingsScreen() {
 
         {/* OTA Updates */}
         <GlassCard>
-          <Text className="text-textPrimary text-[15px] font-bold mb-sm">OTA Updates</Text>
-          <Text className="text-textSecondary text-[13px] mb-sm">
+          <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: 'bold', marginBottom: 8 }}>OTA Updates</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 13, marginBottom: 8 }}>
             Instantly download JavaScript bundle patches without waiting for an APK compiling cycle.
           </Text>
           <Pressable
             onPress={checkForUpdate}
-            className="border border-rim bg-glass07 rounded-pill py-2.5 items-center active:bg-glass10"
+            className="border rounded-pill py-2.5 items-center"
+            style={({ pressed }) => ({
+              backgroundColor: pressed ? colors.glass10 : colors.glass07,
+              borderColor: colors.rim
+            })}
           >
-            <Text className="text-textPrimary font-bold text-[13px]">Check for Update</Text>
+            <Text style={{ color: colors.textPrimary, fontWeight: 'bold', fontSize: 13 }}>Check for Update</Text>
           </Pressable>
         </GlassCard>
 
@@ -210,22 +221,22 @@ export default function SettingsScreen() {
 
         {/* App Info */}
         <GlassCard>
-          <Text className="text-textPrimary text-[15px] font-bold mb-sm">App info</Text>
-          <View className="flex-row justify-between py-2 border-b border-rim">
-            <Text className="text-textSecondary text-xs">Version</Text>
-            <Text className="text-textPrimary text-xs font-bold">{appVersion}</Text>
+          <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: 'bold', marginBottom: 8 }}>App info</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.rim }}>
+            <Text style={{ color: colors.textSecondary, fontSize: 12 }}>Version</Text>
+            <Text style={{ color: colors.textPrimary, fontSize: 12, fontWeight: 'bold' }}>{appVersion}</Text>
           </View>
-          <View className="flex-row justify-between py-2 border-b border-rim">
-            <Text className="text-textSecondary text-xs">Build</Text>
-            <Text className="text-textPrimary text-xs font-bold">Production • Universal APK</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.rim }}>
+            <Text style={{ color: colors.textSecondary, fontSize: 12 }}>Build</Text>
+            <Text style={{ color: colors.textPrimary, fontSize: 12, fontWeight: 'bold' }}>Production • Universal APK</Text>
           </View>
-          <View className="flex-row justify-between py-2 border-b border-rim">
-            <Text className="text-textSecondary text-xs">Security</Text>
-            <Text className="text-textPrimary text-xs font-bold">SecureStore + Kosh TEE</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.rim }}>
+            <Text style={{ color: colors.textSecondary, fontSize: 12 }}>Security</Text>
+            <Text style={{ color: colors.textPrimary, fontSize: 12, fontWeight: 'bold' }}>SecureStore + Kosh TEE</Text>
           </View>
-          <View className="flex-row justify-between py-2 border-b border-rim">
-            <Text className="text-textSecondary text-xs">Storage</Text>
-            <Text className="text-textPrimary text-xs font-bold">SAF + SQLite</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.rim }}>
+            <Text style={{ color: colors.textSecondary, fontSize: 12 }}>Storage</Text>
+            <Text style={{ color: colors.textPrimary, fontSize: 12, fontWeight: 'bold' }}>SAF + SQLite</Text>
           </View>
         </GlassCard>
 
@@ -235,7 +246,7 @@ export default function SettingsScreen() {
             onPress={() => setShowChangelog(!showChangelog)}
             className="flex-row justify-between items-center"
           >
-            <Text className="text-textPrimary text-[15px] font-bold">Changelog</Text>
+            <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: 'bold' }}>Changelog</Text>
             <MaterialIcons
               name={showChangelog ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
               size={22}
@@ -247,13 +258,13 @@ export default function SettingsScreen() {
               {CHANGELOG.map((release) => (
                 <View key={release.version} className="mb-md">
                   <View className="flex-row items-center gap-2 mb-[6px]">
-                    <Text className="text-warm300 text-[13px] font-extrabold">v{release.version}</Text>
-                    <Text className="text-textTertiary text-[11px]">{release.date}</Text>
+                    <Text style={{ color: colors.warm300, fontSize: 13, fontWeight: 'bold' }}>v{release.version}</Text>
+                    <Text style={{ color: colors.textTertiary, fontSize: 11 }}>{release.date}</Text>
                   </View>
                   {release.changes.map((change, i) => (
                     <View key={i} className="flex-row gap-2 pl-1 mb-[3px]">
-                      <Text className="text-textTertiary text-[11px]">•</Text>
-                      <Text className="text-textSecondary text-[11px] flex-1">{change}</Text>
+                      <Text style={{ color: colors.textTertiary, fontSize: 11 }}>•</Text>
+                      <Text style={{ color: colors.textSecondary, fontSize: 11, flex: 1 }}>{change}</Text>
                     </View>
                   ))}
                 </View>
