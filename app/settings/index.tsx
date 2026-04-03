@@ -17,6 +17,17 @@ import { checkForUpdate as checkGithubUpdate, downloadAndInstallApk, UpdateInfo 
 
 const CHANGELOG = [
   {
+    version: '1.1.0',
+    date: '2026-04-03',
+    changes: [
+      'Native Biometric-first vault unlocking (TouchID/FaceID)',
+      'Recents screen obfuscation shield for privacy',
+      'Dynamic SD card connectivity badging (Offline indicators)',
+      'SQLite Pragma-based schema evolution framework',
+      'Initial integration test suite for filesystem indexing',
+    ],
+  },
+  {
     version: '1.0.0',
     date: '2026-03-04',
     changes: [
