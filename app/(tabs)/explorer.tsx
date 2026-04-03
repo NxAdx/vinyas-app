@@ -336,7 +336,7 @@ export default function ExplorerScreen() {
               gap: 16,
               paddingVertical: 12,
               paddingHorizontal: 20,
-              borderColor: colors.border,
+              borderColor: colors.rim,
               borderWidth: 1,
               backgroundColor: colors.void01,
               elevation: 8,
