@@ -5,6 +5,7 @@ interface VaultState {
   hydrate: () => Promise<void>;
   setup: (passcode: string) => Promise<void>;
   unlock: (passcode: string) => Promise<boolean>;
+  unlockWithBiometrics: () => void;
   lock: () => void;
   refreshEntries: () => Promise<void>;
   addEntry: (id: string) => Promise<void>;
@@ -65,6 +66,10 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       set({ error: (e as Error).message, loading: false });
       return false;
     }
+  },
+
+  unlockWithBiometrics: () => {
+    set({ unlocked: true, error: null });
   },
 
   lock: () => {

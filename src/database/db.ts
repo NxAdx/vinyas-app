@@ -4,9 +4,20 @@ import { INIT_QUERIES } from './schema';
 export async function initDatabase() {
   const db = await SQLite.openDatabaseAsync('vinyas.db');
   
-  for (const query of INIT_QUERIES) {
-    await db.execAsync(query);
+  const v = await db.getFirstAsync<{ 'user_version': number }>('PRAGMA user_version');
+  const dbVersion = v?.user_version || 0;
+  let currentVersion = dbVersion;
+
+  if (currentVersion === 0) {
+    for (const query of INIT_QUERIES) {
+      await db.execAsync(query);
+    }
+    currentVersion = 1;
+    await db.execAsync(`PRAGMA user_version = ${currentVersion}`);
   }
+  
+  // Future Migrations go here:
+  // if (currentVersion === 1) { ... currentVersion = 2; PRAGMA user_version = 2; }
   
   // Seed initial system categories if not present
   const result = await db.getAllAsync<{ count: number }>('SELECT count(*) as count FROM categories');

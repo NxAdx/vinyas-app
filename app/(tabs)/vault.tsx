@@ -21,12 +21,13 @@ import { useFileStore } from '@/src/stores/useFileStore';
 import { useVaultStore } from '@/src/stores/useVaultStore';
 import { THEME_DARK, THEME_LIGHT, radius, spacing } from '../../src/theme/tokens';
 
+import ReactNativeBiometrics from 'react-native-biometrics';
+
 export default function VaultScreen() {
   const theme = useAppStore((state) => state.theme);
   const globalMode = useAppStore((state) => state.globalMode);
   const colors = theme === 'dark' ? THEME_DARK : THEME_LIGHT;
 
-  // Apply a subtle blue tint when in Kosh mode to indicate security
   const koshBg = globalMode === 'kosh'
     ? (theme === 'dark' ? '#080C14' : '#F0F7FF')
     : colors.void;
@@ -57,6 +58,7 @@ export default function VaultScreen() {
   const hydrate = useVaultStore((state) => state.hydrate);
   const setup = useVaultStore((state) => state.setup);
   const unlock = useVaultStore((state) => state.unlock);
+  const unlockWithBiometrics = useVaultStore((state) => state.unlockWithBiometrics);
   const lock = useVaultStore((state) => state.lock);
   const refreshEntries = useVaultStore((state) => state.refreshEntries);
   const addEntry = useVaultStore((state) => state.addEntry);
@@ -81,6 +83,31 @@ export default function VaultScreen() {
   useEffect(() => {
     setGlobalMode(unlocked ? 'kosh' : 'warm');
   }, [setGlobalMode, unlocked]);
+
+  useEffect(() => {
+    let active = true;
+    const promptBiometrics = async () => {
+      if (configured && !unlocked && isFocused) {
+        const rnBiometrics = new ReactNativeBiometrics();
+        try {
+          const { available } = await rnBiometrics.isSensorAvailable();
+          if (available && active) {
+            const { success } = await rnBiometrics.simplePrompt({ promptMessage: 'Unlock Kosh Vault' });
+            if (success && active) {
+              unlockWithBiometrics();
+              await refreshEntries();
+              await refreshData();
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            }
+          }
+        } catch (e) {
+          // Biometrics cancelled or failed fallback to PIN.
+        }
+      }
+    };
+    promptBiometrics();
+    return () => { active = false; };
+  }, [configured, unlocked, isFocused, unlockWithBiometrics, refreshEntries, refreshData]);
 
   const vaultLinks = useMemo(() => {
     const idSet = new Set(vaultLinkIds);

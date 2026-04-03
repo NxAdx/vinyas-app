@@ -50,6 +50,7 @@ export default function HomeScreen() {
   const initialized = useFileStore((state) => state.initialized);
   const categories = useFileStore((state) => state.categories);
   const ghostLinks = useFileStore((state) => state.ghostLinks);
+  const storageSources = useFileStore((state) => state.storageSources);
   const hasStoragePermission = useFileStore((state) => state.hasStoragePermission);
   const initialize = useFileStore((state) => state.initialize);
   const grantAccess = useFileStore((state) => state.grantAccess);
@@ -118,7 +119,10 @@ export default function HomeScreen() {
   const totalBookmarks = ghostLinks.length;
   const totalStorageBytes = ghostLinks.reduce((sum, link) => sum + (link.fileSize || 0), 0);
   const koshCount = ghostLinks.filter((link) => link.isKosh).length;
+  
+  const sdCardSource = storageSources.find((s) => s.type === 'sd_card');
   const hasSdCard = ghostLinks.some((link) => link.storageSource === 'sd_card');
+  const isSdCardConnected = sdCardSource?.isConnected ?? false;
 
   const recentLinks = useMemo(
     () => [...ghostLinks].filter(l => !l.isKosh).sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? '')).slice(0, 5),
@@ -251,11 +255,19 @@ export default function HomeScreen() {
                 <View className="flex-row items-center gap-4">
                   <MaterialIcons name="sd-storage" size={24} color={colors.textSecondary} />
                   <View>
-                    <Text style={{ color: colors.textPrimary, fontWeight: '700', fontSize: 15 }}>SD Card</Text>
-                    <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }}>External volume attached</Text>
+                    <Text style={{ color: isSdCardConnected ? colors.textPrimary : colors.textSecondary, fontWeight: '700', fontSize: 15 }}>
+                      SD Card {!isSdCardConnected && '(Disconnected)'}
+                    </Text>
+                    <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }}>
+                      {isSdCardConnected ? 'External volume attached' : 'Insert card to view files'}
+                    </Text>
                   </View>
                 </View>
-                <MaterialIcons name="chevron-right" size={20} color={colors.textSecondary} />
+                <MaterialIcons 
+                  name={isSdCardConnected ? "chevron-right" : "warning"} 
+                  size={20} 
+                  color={isSdCardConnected ? colors.textSecondary : colors.warm500} 
+                />
               </Pressable>
             )}
           </View>

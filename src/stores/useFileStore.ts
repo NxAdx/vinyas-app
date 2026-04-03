@@ -25,6 +25,7 @@ interface FileState {
   removeGhostLink: (id: string) => Promise<void>;
   resetAllData: () => Promise<void>;
   syncDeviceFiles: () => Promise<void>;
+  checkStorageConnectivity: () => Promise<void>;
 }
 
 export const useFileStore = create<FileState>((set, get) => ({
@@ -79,6 +80,7 @@ export const useFileStore = create<FileState>((set, get) => ({
       
       // Auto check permissions on init
       await get().checkPermissions();
+      await get().checkStorageConnectivity();
     } catch (e) {
       set({ error: (e as Error).message, loading: false });
     }
@@ -297,5 +299,21 @@ export const useFileStore = create<FileState>((set, get) => ({
     } catch (e) {
       set({ error: (e as Error).message, loading: false });
     }
-  }
+  },
+
+  checkStorageConnectivity: async () => {
+    try {
+      const { FileService } = await import('../services/file.service');
+      const isConnected = await FileService.checkVolumeConnectivity();
+      
+      set(state => ({
+        storageSources: state.storageSources.map(s => 
+          s.type === 'sd_card' ? { ...s, isConnected } : s
+        ),
+        ghostLinks: state.ghostLinks.map(l => 
+          l.storageSource === 'sd_card' ? { ...l, isAvailable: isConnected } : l
+        )
+      }));
+    } catch { }
+  },
 }));

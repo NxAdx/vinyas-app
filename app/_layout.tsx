@@ -1,6 +1,6 @@
 import '../global.css';
 import { useEffect, useRef, useState } from 'react';
-import { InteractionManager } from 'react-native';
+import { InteractionManager, AppState, View, Text, StyleSheet } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
@@ -25,6 +25,14 @@ export default function RootLayout() {
   const colors = theme === 'dark' ? THEME_DARK : THEME_LIGHT;
 
   const [isReady, setIsReady] = useState(false);
+  const [appState, setAppState] = useState(AppState.currentState);
+
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', next => {
+      setAppState(next);
+    });
+    return () => sub.remove();
+  }, []);
 
   // Fire auth initialization ASAP
   useEffect(() => {
@@ -105,6 +113,12 @@ export default function RootLayout() {
           }}
         />
       </Stack>
+
+      {appState !== 'active' && (
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.void, justifyContent: 'center', alignItems: 'center', zIndex: 99999 }]}>
+          <Text style={{ color: colors.textPrimary, fontSize: 32, fontWeight: '800' }}>Vinyas</Text>
+        </View>
+      )}
     </>
   );
 }

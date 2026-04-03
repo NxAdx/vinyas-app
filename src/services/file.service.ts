@@ -150,5 +150,16 @@ export const FileService = {
     }
 
     return results;
+  },
+
+  async checkVolumeConnectivity(): Promise<boolean> {
+    try {
+      const uri = await this.getSavedUri();
+      if (!uri) return false;
+      const info = await FileSystem.getInfoAsync(uri);
+      return info.exists;
+    } catch {
+      return false;
+    }
   }
 };

@@ -34,7 +34,8 @@ const ExplorerFileRow = memo(({
   hasBookmarks, 
   isBookmarkedInSelectedCategory, 
   onToggleSelection, 
-  onBookmarkPress
+  onBookmarkPress,
+  isAvailable = true
 }: {
   item: ExplorerFileItem; 
   colors: any; 
@@ -43,6 +44,7 @@ const ExplorerFileRow = memo(({
   isBookmarkedInSelectedCategory: boolean;
   onToggleSelection: (uri: string) => void;
   onBookmarkPress: (item: ExplorerFileItem, isBookmarked: boolean) => void;
+  isAvailable?: boolean;
 }) => {
   // Determine premium distinct icons/colors based on mime type mapping
   let iconName = 'insert-drive-file';
@@ -72,9 +74,9 @@ const ExplorerFileRow = memo(({
           <MaterialIcons name={iconName as any} size={24} color={iconColor} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: '600' }} numberOfLines={1}>{item.name}</Text>
+          <Text style={{ color: isAvailable ? colors.textPrimary : colors.textTertiary, fontSize: 15, fontWeight: '600' }} numberOfLines={1}>{item.name}</Text>
           <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 3 }}>
-            {formatBytes(item.size)} {hasBookmarks ? '• Bookmarked' : ''}
+            {formatBytes(item.size)} {hasBookmarks ? '• Bookmarked' : ''} {!isAvailable && '• (Offline)'}
           </Text>
         </View>
       </View>
@@ -203,6 +205,10 @@ export default function ExplorerScreen() {
     const hasBookmarks = linksForFile.length > 0;
     const isSelectedMode = selectedUris.has(item.uri);
 
+    const storageSources = useFileStore.getState().storageSources;
+    const isAvailable = item.storageSource === 'internal' || 
+      (storageSources.find(s => s.type === item.storageSource)?.isConnected ?? true);
+
     return (
       <ExplorerFileRow
         item={item}
@@ -212,6 +218,7 @@ export default function ExplorerScreen() {
         isBookmarkedInSelectedCategory={isBookmarkedInSelectedCategory}
         onToggleSelection={handleToggleSelection}
         onBookmarkPress={handleBookmarkPress}
+        isAvailable={isAvailable}
       />
     );
   }, [ghostLinks, selectedCategoryId, selectedUris, colors, handleToggleSelection, handleBookmarkPress]);
