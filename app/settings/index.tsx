@@ -13,6 +13,7 @@ import { useAuthStore } from '@/src/stores/useAuthStore';
 import { useFileStore } from '@/src/stores/useFileStore';
 import { useVaultStore } from '@/src/stores/useVaultStore';
 import { THEME_DARK, THEME_LIGHT } from '../../src/theme/tokens';
+import { checkForUpdate as checkGithubUpdate, downloadAndInstallApk, UpdateInfo } from '@/src/services/updater.service';
 
 const CHANGELOG = [
   {
@@ -69,16 +70,41 @@ export default function SettingsScreen() {
 
   const checkForUpdate = async () => {
     try {
+      // 1. Check Native GitHub Releases (Full APK patches)
+      const buildUpdate = await checkGithubUpdate(false);
+      if (buildUpdate && buildUpdate.hasUpdate) {
+        Alert.alert(
+          'App Update Available',
+          `Vinyas v${buildUpdate.version} is ready for installation.\n\n${buildUpdate.changelog}`,
+          [
+            { text: 'Later', style: 'cancel' },
+            {
+              text: 'Install Now',
+              style: 'default',
+              onPress: async () => {
+                Alert.alert("Downloading...", "Update is downloading in the background. Please do not close the app.", [], { cancelable: false });
+                const success = await downloadAndInstallApk(buildUpdate.downloadUrl, buildUpdate.version);
+                if (!success) {
+                   Alert.alert('Update Failed', 'Vinyas could not install the update. You might need to manually permit unknown sourcces.');
+                }
+              }
+            }
+          ]
+        );
+        return; // Halt OTA logic if hard binary update exists
+      }
+
+      // 2. Fallback to JS-only OTA Updates
       if (!Updates.isEmergencyLaunch && Constants.expoConfig?.updates?.url) {
         const update = await Updates.checkForUpdateAsync();
         if (update.isAvailable) {
           Alert.alert(
-            'OTA Update Available',
-            'A new patch is available. Installing this will refresh the app to the latest version.',
+            'OTA Patch Available',
+            'A new javascript patch is available. Installing this will refresh the app to the latest version.',
             [
               { text: 'Later', style: 'cancel' },
               {
-                text: 'Update & Restart',
+                text: 'Patch & Restart',
                 onPress: async () => {
                   try {
                     await Updates.fetchUpdateAsync();

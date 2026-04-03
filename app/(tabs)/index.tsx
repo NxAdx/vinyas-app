@@ -9,11 +9,9 @@ import {
   Text,
   TextInput,
   View,
-  InteractionManager
 } from 'react-native';
 
 import { AppScreen } from '@/src/components/AppScreen';
-import { GlassCard } from '@/src/components/GlassCard';
 import { useAppStore } from '@/src/stores/useAppStore';
 import { useFileStore } from '@/src/stores/useFileStore';
 import { useVaultStore } from '@/src/stores/useVaultStore';
@@ -25,10 +23,17 @@ const CATEGORY_ICONS: Record<string, string> = {
   'cat-vid': 'movie',
   'cat-aud': 'audiotrack',
   'cat-apk': 'android',
-  'cat-download': 'download',
-  'cat-apps': 'apps',
   'cat-other': 'more-horiz',
-  'cat-kosh': 'lock',
+};
+
+// Specialized bento colors combining tint + opacity for background
+const BENTO_THEMES: Record<string, { bg: string; icon: string }> = {
+  'cat-img': { bg: 'rgba(66, 153, 225, 0.12)', icon: '#63B3ED' },     // Blue
+  'cat-doc': { bg: 'rgba(245, 101, 101, 0.12)', icon: '#FC8181' },     // Red
+  'cat-vid': { bg: 'rgba(26, 32, 44, 0.40)', icon: '#4A5568' },        // Dark Video
+  'cat-aud': { bg: 'rgba(159, 122, 234, 0.12)', icon: '#B794F4' },     // Purple
+  'cat-apk': { bg: 'rgba(237, 137, 54, 0.12)', icon: '#F6AD55' },      // Orange
+  'cat-other': { bg: 'rgba(160, 174, 192, 0.12)', icon: '#CBD5E0' },   // Gray
 };
 
 function formatBytes(bytes: number): string {
@@ -64,7 +69,6 @@ export default function HomeScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [didAutoPrompt, setDidAutoPrompt] = useState(false);
 
-  // Auto prompt for storage on first load if missing
   useEffect(() => {
     if (initialized && !hasStoragePermission && !didAutoPrompt) {
       setDidAutoPrompt(true);
@@ -72,7 +76,6 @@ export default function HomeScreen() {
     }
   }, [initialized, hasStoragePermission, didAutoPrompt, grantAccess]);
 
-  // We explicitly inject "Other" into the UI render array without modifying the database yet
   const displayCategories = useMemo(() => {
     const base = categories.filter((c) => !c.isKosh);
     if (!base.find(c => c.id === 'cat-other')) {
@@ -94,36 +97,22 @@ export default function HomeScreen() {
   useEffect(() => {
     let isMounted = true;
     const init = async () => {
-      console.log('[Vinyas] HomeScreen: Starting DB/Vault Init...');
       try {
-        if (!initialized) {
-          console.log('[Vinyas] HomeScreen: Initializing FileStore...');
-          await initialize();
-        }
-        console.log('[Vinyas] HomeScreen: Hydrating VaultStore...');
+        if (!initialized) await initialize();
         await hydrateVault();
-        console.log('[Vinyas] HomeScreen: Initialization Complete.');
       } catch (err) {
         console.warn('[Vinyas] Home screen DB init failed safely:', err);
       } finally {
-        if (isMounted) {
-          setHasLoadedApp(true);
-        }
+        if (isMounted) setHasLoadedApp(true);
       }
     };
     init();
-
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, [hydrateVault, initialize, initialized, setHasLoadedApp]);
 
   useEffect(() => {
-    if (unlockedVault) {
-      setGlobalMode('kosh');
-    } else if (globalMode === 'kosh') {
-      setGlobalMode('warm');
-    }
+    if (unlockedVault) setGlobalMode('kosh');
+    else if (globalMode === 'kosh') setGlobalMode('warm');
   }, [globalMode, setGlobalMode, unlockedVault]);
 
   const totalBookmarks = ghostLinks.length;
@@ -131,14 +120,8 @@ export default function HomeScreen() {
   const koshCount = ghostLinks.filter((link) => link.isKosh).length;
   const hasSdCard = ghostLinks.some((link) => link.storageSource === 'sd_card');
 
-  const filteredCategories = useMemo(() => {
-    if (!searchQuery.trim()) return displayCategories;
-    const q = searchQuery.toLowerCase();
-    return displayCategories.filter((c) => c.name.toLowerCase().includes(q));
-  }, [displayCategories, searchQuery]);
-
   const recentLinks = useMemo(
-    () => [...ghostLinks].sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? '')).slice(0, 5),
+    () => [...ghostLinks].filter(l => !l.isKosh).sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? '')).slice(0, 5),
     [ghostLinks]
   );
 
@@ -147,24 +130,20 @@ export default function HomeScreen() {
     router.push('/(tabs)/vault');
   };
 
-const CAT_COLORS: Record<string, string> = {
-    'cat-img': '#4299E1', // Blue
-    'cat-doc': '#F56565', // Red
-    'cat-vid': '#48BB78', // Green
-    'cat-aud': '#9F7AEA', // Purple
-    'cat-apk': '#ED8936', // Orange
-    'cat-other': '#A0AEC0', // Gray
+  const handleFileSearch = () => {
+    if (!searchQuery.trim()) return;
+    router.push({ pathname: '/(tabs)/explorer', params: { search: searchQuery } });
   };
 
   return (
     <AppScreen style={{ backgroundColor: colors.void }}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 16, paddingBottom: 44, paddingHorizontal: 16 }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 20, paddingBottom: 44, paddingHorizontal: 16 }}>
         
         {/* Header */}
         <View className="flex-row justify-between items-start mt-4">
           <Pressable onLongPress={handleSecretGesture} delayLongPress={700} className="flex-1">
             <Text style={{ color: colors.textPrimary, fontSize: 32, fontWeight: '800' }}>Vinyas</Text>
-            <Text style={{ color: colors.textSecondary, fontSize: 14, marginTop: 4 }}>
+            <Text style={{ color: colors.textSecondary, fontSize: 13, marginTop: 4 }}>
               Long-press logo for hidden Kosh entry.
             </Text>
           </Pressable>
@@ -173,68 +152,76 @@ const CAT_COLORS: Record<string, string> = {
             className="w-10 h-10 rounded-full items-center justify-center mt-1"
             style={{ backgroundColor: colors.glass07 }}
           >
-            <MaterialIcons name="settings" size={22} color={colors.textSecondary} />
+            <MaterialIcons name="settings" size={20} color={colors.textSecondary} />
           </Pressable>
         </View>
 
         {/* Stats Row */}
         <View className="flex-row gap-3">
-          <View style={{ flex: 1, backgroundColor: 'transparent', borderRadius: 20, padding: 12, borderWidth: 1, borderColor: colors.rim }}>
-            <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase' }}>Bookmarks</Text>
-            <Text style={{ color: colors.textPrimary, fontSize: 24, fontWeight: '800', marginTop: 6 }} numberOfLines={1} adjustsFontSizeToFit>{totalBookmarks}</Text>
+          <View style={{ flex: 1, backgroundColor: colors.glass04, borderRadius: 16, padding: 14, borderWidth: 1, borderColor: colors.rim }}>
+            <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase' }}>Bookmarks</Text>
+            <Text style={{ color: colors.textPrimary, fontSize: 22, fontWeight: '800', marginTop: 8 }} numberOfLines={1} adjustsFontSizeToFit>{totalBookmarks}</Text>
           </View>
-          <View style={{ flex: 1, backgroundColor: 'transparent', borderRadius: 20, padding: 12, borderWidth: 1, borderColor: colors.rim }}>
-            <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase' }}>Storage</Text>
-            <Text style={{ color: colors.textPrimary, fontSize: 24, fontWeight: '800', marginTop: 6 }} numberOfLines={1} adjustsFontSizeToFit>{formatBytes(totalStorageBytes)}</Text>
+          <View style={{ flex: 1, backgroundColor: colors.glass04, borderRadius: 16, padding: 14, borderWidth: 1, borderColor: colors.rim }}>
+            <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase' }}>Storage</Text>
+            <Text style={{ color: colors.textPrimary, fontSize: 22, fontWeight: '800', marginTop: 8 }} numberOfLines={1} adjustsFontSizeToFit>{formatBytes(totalStorageBytes)}</Text>
           </View>
-          <View style={{ flex: 1, backgroundColor: 'transparent', borderRadius: 20, padding: 12, borderWidth: 1, borderColor: colors.rim }}>
-            <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase' }}>Kosh</Text>
-            <Text style={{ color: colors.textPrimary, fontSize: 24, fontWeight: '800', marginTop: 6 }} numberOfLines={1} adjustsFontSizeToFit>{koshCount}</Text>
+          <View style={{ flex: 1, backgroundColor: colors.glass04, borderRadius: 16, padding: 14, borderWidth: 1, borderColor: colors.rim }}>
+            <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase' }}>Kosh</Text>
+            <Text style={{ color: colors.textPrimary, fontSize: 22, fontWeight: '800', marginTop: 8 }} numberOfLines={1} adjustsFontSizeToFit>{koshCount}</Text>
           </View>
         </View>
 
         {/* Search */}
-        <View style={{ backgroundColor: 'transparent', borderRadius: 999, borderWidth: 1, borderColor: colors.rim, paddingHorizontal: 16, paddingVertical: 14 }}>
+        <View style={{ backgroundColor: 'transparent', borderRadius: 18, borderWidth: 1, borderColor: colors.rim, paddingHorizontal: 16, paddingVertical: 14 }}>
           <TextInput
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholder="Search files and categories..."
+            onSubmitEditing={handleFileSearch}
+            returnKeyType="search"
+            placeholder="Search files..."
             placeholderTextColor={colors.textSecondary}
             style={{ color: colors.textPrimary, fontSize: 15 }}
           />
         </View>
 
-        {/* Category Grid */}
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: 28, columnGap: 12 }}>
-          {filteredCategories.map((cat) => {
+        {/* 2-Column Bento Grid */}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 16 }}>
+          {displayCategories.map((cat) => {
             const bookmarkCount = ghostLinks.filter((l) => l.categoryId === cat.id).length;
             const iconName = CATEGORY_ICONS[cat.id] || cat.icon || 'folder';
-            const catColor = CAT_COLORS[cat.id] || '#A0AEC0';
+            const themeNode = BENTO_THEMES[cat.id] || BENTO_THEMES['cat-other'];
             
             return (
               <Pressable
                 key={cat.id}
                 onPress={() => router.push({ pathname: '/category/[id]' as never, params: { id: cat.id } })}
                 style={({ pressed }) => ({
-                  width: '18%', // Fits ~5 items per row with gaps
-                  opacity: pressed ? 0.7 : 1,
-                  alignItems: 'flex-start',
+                  width: '48%', 
+                  minHeight: 110,
+                  backgroundColor: themeNode.bg,
+                  borderRadius: 20,
+                  padding: 16,
+                  borderWidth: 1,
+                  borderColor: 'rgba(255,255,255,0.05)',
+                  opacity: pressed ? 0.8 : 1,
+                  justifyContent: 'space-between',
                 })}
               >
-                <MaterialIcons name={iconName as any} size={30} color={catColor} />
-                <View className="mt-3">
-                  <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '700' }} numberOfLines={1} adjustsFontSizeToFit>{cat.name}</Text>
-                  <Text style={{ color: colors.textSecondary, fontSize: 11, marginTop: 2 }}>{bookmarkCount} items</Text>
+                <MaterialIcons name={iconName as any} size={28} color={themeNode.icon} />
+                <View className="mt-4">
+                  <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '800' }} numberOfLines={1} adjustsFontSizeToFit>{cat.name}</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 11, marginTop: 4 }}>{bookmarkCount} items</Text>
                 </View>
               </Pressable>
             );
           })}
         </View>
 
-        {/* Storage Locations */}
-        <View style={{ marginTop: 12 }}>
-          <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 12, marginLeft: 4 }}>Storage devices</Text>
-          <View style={{ backgroundColor: colors.glass04, borderRadius: 24, borderWidth: 1, borderColor: colors.rim, overflow: 'hidden' }}>
+        {/* Storage Devices Bounding Box */}
+        <View style={{ marginTop: 8 }}>
+          <Text style={{ color: colors.textPrimary, fontSize: 17, fontWeight: '700', marginBottom: 12, marginLeft: 4 }}>Storage devices</Text>
+          <View style={{ backgroundColor: colors.glass04, borderRadius: 20, borderWidth: 1, borderColor: colors.rim, overflow: 'hidden' }}>
             <Pressable
               onPress={handleStoragePress}
               className="flex-row items-center justify-between px-5 py-4 border-b"
@@ -246,7 +233,7 @@ const CAT_COLORS: Record<string, string> = {
               <View className="flex-row items-center gap-4">
                 <MaterialIcons name="smartphone" size={24} color={colors.textSecondary} />
                 <View>
-                  <Text style={{ color: colors.textPrimary, fontWeight: '600', fontSize: 15 }}>Internal Storage</Text>
+                  <Text style={{ color: colors.textPrimary, fontWeight: '700', fontSize: 15 }}>Internal Storage</Text>
                   <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }}>Emulated device storage</Text>
                 </View>
               </View>
@@ -256,16 +243,15 @@ const CAT_COLORS: Record<string, string> = {
             {hasSdCard && (
               <Pressable
                 onPress={handleStoragePress}
-                className="flex-row items-center justify-between px-5 py-4 border-t"
+                className="flex-row items-center justify-between px-5 py-4"
                 style={({ pressed }) => ({
                   backgroundColor: pressed ? colors.glass07 : 'transparent',
-                  borderColor: colors.rim,
                 })}
               >
                 <View className="flex-row items-center gap-4">
                   <MaterialIcons name="sd-storage" size={24} color={colors.textSecondary} />
                   <View>
-                    <Text style={{ color: colors.textPrimary, fontWeight: '600', fontSize: 15 }}>SD Card</Text>
+                    <Text style={{ color: colors.textPrimary, fontWeight: '700', fontSize: 15 }}>SD Card</Text>
                     <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }}>External volume attached</Text>
                   </View>
                 </View>
@@ -277,8 +263,8 @@ const CAT_COLORS: Record<string, string> = {
 
         {/* Recent Activity */}
         {recentLinks.length > 0 && (
-          <View style={{ marginTop: 16 }}>
-            <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 12, paddingHorizontal: 4 }}>Recent files</Text>
+          <View style={{ marginTop: 8 }}>
+            <Text style={{ color: colors.textPrimary, fontSize: 17, fontWeight: '700', marginBottom: 12, paddingHorizontal: 4 }}>Recent files</Text>
             <FlatList
               data={recentLinks}
               horizontal
